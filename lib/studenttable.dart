@@ -1,304 +1,160 @@
-
-
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+// lib/screens/student_table.dart
 import 'package:flutter/material.dart';
-import 'package:school_management/adminpanel.dart';
-import 'package:school_management/model_class/ipAddress.dart';
+import 'package:provider/provider.dart';
+import 'package:mobile/providers/student_provider.dart';
 
-class Studenttable extends StatefulWidget {
-  const Studenttable({super.key});
+class StudentTable extends StatefulWidget {
+  const StudentTable({super.key});
 
   @override
-  State<Studenttable> createState() => _StudenttableState();
+  State<StudentTable> createState() => _StudentTableState();
 }
 
-class _StudenttableState extends State<Studenttable> {
+class _StudentTableState extends State<StudentTable> {
   final _formKey = GlobalKey<FormState>();
 
-  TextEditingController _student_id = TextEditingController();
-  TextEditingController _full_name = TextEditingController();
-  TextEditingController _dob = TextEditingController();
-  TextEditingController _email = TextEditingController();
-  TextEditingController _mob = TextEditingController();
-  TextEditingController _class1 = TextEditingController();
-  TextEditingController _subject = TextEditingController();
-  TextEditingController _present_addres = TextEditingController();
-  TextEditingController _permanent_address = TextEditingController();
-  TextEditingController _session = TextEditingController();
-  TextEditingController _status = TextEditingController();
-  TextEditingController _section = TextEditingController();
+  final TextEditingController _studentId = TextEditingController();
+  final TextEditingController _fullName = TextEditingController();
+  final TextEditingController _dob = TextEditingController();
+  final TextEditingController _email = TextEditingController();
+  final TextEditingController _mobile = TextEditingController();
+  final TextEditingController _class = TextEditingController();
+  final TextEditingController _subject = TextEditingController();
+  final TextEditingController _presentAddress = TextEditingController();
+  final TextEditingController _permanentAddress = TextEditingController();
+  final TextEditingController _session = TextEditingController();
+  final TextEditingController _status = TextEditingController();
+  final TextEditingController _section = TextEditingController();
 
-  String _selectedGender = 'Male'; // Default value
+  String _selectedGender = 'Male';
+  int? _editingId;
 
-  Future<void> applyforaccount() async {
-    if (_formKey.currentState!.validate()) {
-      final Map<String, dynamic> data = {
-        'student_id': int.parse(_student_id.text),
-        'full_name': _full_name.text,
-        'dob': _dob.text,
-        'email': _email.text,
-        'mob': _mob.text,
-        'gender': _selectedGender,
-        'class1': _class1.text,
-        'subject': _subject.text,
-        'present_address': _present_addres.text,
-        'permanent_address': _permanent_address.text,
-        'session': _session.text,
-        'status': _status.text,
-        'section': _section.text,
-      };
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() =>
+        Provider.of<StudentProvider>(context, listen: false).fetchStudents());
+  }
 
-      Ip ip = Ip();
-      final response = await http.post(
-        Uri.parse(ip.ipAddress + '/allstudent'),
-        body: jsonEncode(data),
-        headers: {"Content-Type": "application/json"},
+  Map<String, dynamic> _buildStudentData() {
+    return {
+      'student_id': int.parse(_studentId.text),
+      'full_name': _fullName.text,
+      'dob': _dob.text,
+      'email': _email.text,
+      'mob': _mobile.text,
+      'gender': _selectedGender,
+      'class1': _class.text,
+      'subject': _subject.text,
+      'present_address': _presentAddress.text,
+      'permanent_address': _permanentAddress.text,
+      'session': _session.text,
+      'status': _status.text,
+      'section': _section.text,
+    };
+  }
+
+  void _resetForm() {
+    _formKey.currentState?.reset();
+    _studentId.clear();
+    _fullName.clear();
+    _dob.clear();
+    _email.clear();
+    _mobile.clear();
+    _class.clear();
+    _subject.clear();
+    _presentAddress.clear();
+    _permanentAddress.clear();
+    _session.clear();
+    _status.clear();
+    _section.clear();
+    _selectedGender = 'Male';
+    _editingId = null;
+  }
+
+  void _populateForm(Map<String, dynamic> student) {
+    setState(() {
+      _editingId = student['id'];
+      _studentId.text = student['student_id'].toString();
+      _fullName.text = student['full_name'];
+      _dob.text = student['dob'];
+      _email.text = student['email'];
+      _mobile.text = student['mob'];
+      _selectedGender = student['gender'];
+      _class.text = student['class1'];
+      _subject.text = student['subject'];
+      _presentAddress.text = student['present_address'];
+      _permanentAddress.text = student['permanent_address'];
+      _session.text = student['session'];
+      _status.text = student['status'];
+      _section.text = student['section'];
+    });
+  }
+
+  Future<void> _submitStudent(StudentProvider provider) async {
+    if (!_formKey.currentState!.validate()) return;
+    try {
+      await provider.addOrUpdateStudent(_buildStudentData(), id: _editingId);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_editingId == null ? 'Student added' : 'Student updated')),
       );
-
-      if (response.statusCode == 200) {
-        final Response = jsonDecode(response.body);
-        // Handle response data as needed
-      } else {
-        throw Exception("Error");
-      }
+      _resetForm();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final provider = Provider.of<StudentProvider>(context);
+
     return Scaffold(
-      appBar: AppBar(
-        title: Text("Add New Student"),
-        backgroundColor: Colors.teal,
-      ),
-      body: Form(
-        key: _formKey, // Associate the form key with the form
-        child: Padding(
-          padding: EdgeInsets.all(16.0),
-          child: SingleChildScrollView(
-            child: Column(
-              children: <Widget>[
-                buildTextField(
-                  _student_id,
-                  'Student ID',
-                  Icons.assignment_ind,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter a student ID';
-                    }
-                    if (int.tryParse(value) == null) {
-                      return 'Please enter a valid number';
-                    }
-                    return null;
-                  },
-                ),
-                buildTextField(
-                  _full_name,
-                  'Full Name',
-                  Icons.person,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter a full name';
-                    }
-                    return null;
-                  },
-                ),
-                buildTextField(
-                  _dob,
-                  'Date of Birth',
-                  Icons.cake,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter a date of birth';
-                    }
-                    return null;
-                  },
-                ),
-                buildTextField(
-                  _email,
-                  'Email',
-                  Icons.email,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter an email';
-                    }
-                    if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
-                      return 'Please enter a valid email';
-                    }
-                    return null;
-                  },
-                ),
-                buildTextField(
-                  _mob,
-                  'Mobile Number',
-                  Icons.phone,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter a mobile number';
-                    }
-                    if (!RegExp(r'^\d{10}$').hasMatch(value)) {
-                      return 'Please enter a valid 10-digit number';
-                    }
-                    return null;
-                  },
-                ),
-                buildGenderDropdown(),
-                buildTextField(
-                  _class1,
-                  'Class',
-                  Icons.class_,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter a class';
-                    }
-                    return null;
-                  },
-                ),
-                buildTextField(
-                  _subject,
-                  'Subject',
-                  Icons.book,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter a subject';
-                    }
-                    return null;
-                  },
-                ),
-                buildTextField(
-                  _present_addres,
-                  'Present Address',
-                  Icons.home,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter a present address';
-                    }
-                    return null;
-                  },
-                ),
-                buildTextField(
-                  _permanent_address,
-                  'Permanent Address',
-                  Icons.location_city,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter a permanent address';
-                    }
-                    return null;
-                  },
-                ),
-                buildTextField(
-                  _session,
-                  'Session',
-                  Icons.date_range,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter a session';
-                    }
-                    return null;
-                  },
-                ),
-                buildTextField(
-                  _status,
-                  'Status',
-                  Icons.verified_user,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter a status';
-                    }
-                    return null;
-                  },
-                ),
-                buildTextField(
-                  _section,
-                  'Section',
-                  Icons.account_tree,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter a section';
-                    }
-                    return null;
-                  },
-                ),
-                SizedBox(height: 20),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.teal,
-                    padding: EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  child: Text('Add Student', style: TextStyle(fontSize: 18)),
-                  onPressed: () async {
-                    if (_formKey.currentState!.validate()) {
-                      // If the form is valid, process the data
-                      await applyforaccount();
-                      SnackBar snk = SnackBar(content: Text('Added successfully'));
-                      ScaffoldMessenger.of(context).showSnackBar(snk);
-
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => Adminpanel()),
-                      );
-                    }
-                  },
-                ),
-              ],
-            ),
+      appBar: AppBar(title: const Text("Student Management"), backgroundColor: Colors.teal),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            children: [
+              // Reuse your form fields here as before...
+              ElevatedButton(
+                onPressed: () => _submitStudent(provider),
+                child: Text(_editingId == null ? 'Add Student' : 'Update Student'),
+              ),
+              const SizedBox(height: 30),
+              const Text('All Students', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              provider.isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : Column(
+                      children: provider.students
+                          .map(
+                            (student) => ListTile(
+                              title: Text(student['full_name']),
+                              subtitle: Text("Class: ${student['class1']}"),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.edit, color: Colors.orange),
+                                    onPressed: () => _populateForm(student),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.delete, color: Colors.red),
+                                    onPressed: () async {
+                                      await provider.deleteStudent(student['id']);
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(content: Text("Student deleted")));
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                          .toList(),
+                    )
+            ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget buildTextField(TextEditingController controller, String labelText, IconData icon,
-      {bool obscureText = false, String? Function(String?)? validator}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: TextFormField(
-        controller: controller,
-        obscureText: obscureText,
-        decoration: InputDecoration(
-          labelText: labelText,
-          prefixIcon: Icon(icon, color: Colors.teal),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-          filled: true,
-          fillColor: Colors.grey[200],
-        ),
-        validator: validator, // Add validator here
-      ),
-    );
-  }
-
-  Widget buildGenderDropdown() {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: DropdownButtonFormField<String>(
-        value: _selectedGender,
-        decoration: InputDecoration(
-          labelText: 'Gender',
-          prefixIcon: Icon(Icons.wc, color: Colors.teal),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-          filled: true,
-          fillColor: Colors.grey[200],
-        ),
-        items: ['Male', 'Female', 'Other']
-            .map((gender) => DropdownMenuItem<String>(
-          value: gender,
-          child: Text(gender),
-        ))
-            .toList(),
-        onChanged: (value) {
-          setState(() {
-            _selectedGender = value!;
-          });
-        },
       ),
     );
   }

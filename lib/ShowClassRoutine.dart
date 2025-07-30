@@ -1,14 +1,6 @@
 import 'package:flutter/material.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'package:school_management/model_class/Classroutine.dart';
-import 'package:school_management/model_class/ipAddress.dart';
-
-List<Classroutine> objectsFromJson(String str) => List<Classroutine>.from(
-    json.decode(str).map((x) => Classroutine.fromJson(x)));
-
-String objectsToJson(List<Classroutine> data) =>
-    json.encode(List<Classroutine>.from(data.map((x) => x.toJson())));
+import 'package:provider/provider.dart';
+import 'package:mobile/providers/class_routine_provider.dart';
 
 class ShowClassRoutine extends StatefulWidget {
   const ShowClassRoutine({super.key});
@@ -19,35 +11,17 @@ class ShowClassRoutine extends StatefulWidget {
 
 class _ShowClassRoutineState extends State<ShowClassRoutine> {
   final TextEditingController _classNameController = TextEditingController();
-  late Future<List<Classroutine>> _futureRoutines;
 
   @override
-  void initState() {
-    super.initState();
-    _futureRoutines = Future.value([]);
-  }
-
-  Future<List<Classroutine>> showByClass(String className) async {
-    Ip ip = Ip();
-    final response = await http.get(
-      Uri.parse('${ip.ipAddress}/searchstudentroutine/$className'),
-    );
-
-    if (response.statusCode == 200) {
-      return objectsFromJson(response.body);
-    } else {
-      throw Exception("Failed to load data");
-    }
-  }
-
-  void search() {
-    setState(() {
-      _futureRoutines = showByClass(_classNameController.text);
-    });
+  void dispose() {
+    _classNameController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final provider = Provider.of<ClassRoutineProvider>(context);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("Class Routine"),
@@ -58,7 +32,7 @@ class _ShowClassRoutineState extends State<ShowClassRoutine> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Search Form
+            // Search input and button
             Card(
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12.0),
@@ -80,26 +54,27 @@ class _ShowClassRoutineState extends State<ShowClassRoutine> {
                         ),
                       ),
                     ),
-                    SizedBox(width: 16.0),
+                    const SizedBox(width: 16.0),
                     Expanded(
                       flex: 1,
                       child: ElevatedButton(
                         onPressed: () {
                           if (_classNameController.text.isNotEmpty) {
-                            search();
+                            provider.fetchRoutinesByClass(_classNameController.text.trim());
                           }
                         },
                         style: ElevatedButton.styleFrom(
-                          foregroundColor: Colors.teal,
+                          foregroundColor: Colors.white,
+                          backgroundColor: Colors.teal,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8.0),
                           ),
                           elevation: 5,
-                          padding: EdgeInsets.symmetric(vertical: 14.0),
+                          padding: const EdgeInsets.symmetric(vertical: 14.0),
                           side: BorderSide(color: Colors.teal.shade700),
                           shadowColor: Colors.teal.withOpacity(0.5),
                         ),
-                        child: Row(
+                        child: const Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(Icons.search, size: 20),
@@ -113,26 +88,29 @@ class _ShowClassRoutineState extends State<ShowClassRoutine> {
                 ),
               ),
             ),
-            SizedBox(height: 16.0),
-            // Class Routine List
+
+            const SizedBox(height: 16.0),
+
+            // Show loading / error / data
             Expanded(
-              child: FutureBuilder<List<Classroutine>>(
-                future: _futureRoutines,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return Center(
+              child: Builder(
+                builder: (context) {
+                  if (provider.isLoading) {
+                    return const Center(
                       child: CircularProgressIndicator(
                         valueColor: AlwaysStoppedAnimation<Color>(Colors.teal),
                       ),
                     );
-                  } else if (snapshot.hasError) {
+                  }
+                  if (provider.error != null) {
                     return Center(
                       child: Text(
-                        "Error: ${snapshot.error}",
-                        style: TextStyle(color: Colors.red, fontSize: 16),
+                        "Error: ${provider.error}",
+                        style: const TextStyle(color: Colors.red, fontSize: 16),
                       ),
                     );
-                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  }
+                  if (provider.routines.isEmpty) {
                     return Center(
                       child: Card(
                         color: Colors.teal.shade50,
@@ -140,8 +118,8 @@ class _ShowClassRoutineState extends State<ShowClassRoutine> {
                           borderRadius: BorderRadius.circular(8.0),
                         ),
                         elevation: 2,
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
+                        child: const Padding(
+                          padding: EdgeInsets.all(16.0),
                           child: Text(
                             "No data found",
                             style: TextStyle(
@@ -153,36 +131,36 @@ class _ShowClassRoutineState extends State<ShowClassRoutine> {
                         ),
                       ),
                     );
-                  } else {
-                    return ListView(
-                      children: snapshot.data!.map((routine) {
-                        return Card(
-                          margin: const EdgeInsets.symmetric(vertical: 8.0),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12.0),
-                          ),
-                          elevation: 3,
-                          child: ListTile(
-                            contentPadding: const EdgeInsets.all(16.0),
-                            title: Text('Class Routine'),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('Day: ${routine.day.toString()}'),
-                                Text('Section: ${routine.section.toString()}'),
-                                Text('Subject: ${routine.subject.toString()}'),
-                                Text(
-                                    'Start Time: ${routine.startTime.toString()}'),
-                                Text('End Time: ${routine.endTime.toString()}'),
-                                Text('Teacher: ${routine.teacher.toString()}'),
-                                Text('Room No: ${routine.roomNo.toString()}'),
-                              ],
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    );
                   }
+                  return ListView.builder(
+                    itemCount: provider.routines.length,
+                    itemBuilder: (context, index) {
+                      final routine = provider.routines[index];
+                      return Card(
+                        margin: const EdgeInsets.symmetric(vertical: 8.0),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.0),
+                        ),
+                        elevation: 3,
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.all(16.0),
+                          title: const Text('Class Routine'),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Day: ${routine.day}'),
+                              Text('Section: ${routine.section}'),
+                              Text('Subject: ${routine.subject}'),
+                              Text('Start Time: ${routine.startTime}'),
+                              Text('End Time: ${routine.endTime}'),
+                              Text('Teacher: ${routine.teacher}'),
+                              Text('Room No: ${routine.roomNo}'),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  );
                 },
               ),
             ),

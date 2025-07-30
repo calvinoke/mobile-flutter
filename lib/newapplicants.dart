@@ -1,230 +1,93 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
-import 'package:school_management/model_class/Onlineadmission.dart';
-import 'package:school_management/model_class/ipAddress.dart';
+import 'package:provider/provider.dart';
+import 'package:mobile/providers/new_applicants_provider.dart';
+import 'package:mobile/model_class/Onlineadmission.dart';
 
-
-
-
-List<Onlineadmission> objectsFromJson(String str) => List<Onlineadmission>.from(
-    json.decode(str).map((x) => Onlineadmission.fromJson(x)));
-String objectsToJson(List<Onlineadmission> data) =>
-    json.encode(List<Onlineadmission>.from(data).map((x) => x.toJson()));
-
-
-class Newapplicants extends StatefulWidget {
-  const Newapplicants({super.key});
+class NewApplicants extends StatefulWidget {
+  const NewApplicants({super.key});
 
   @override
-  State<Newapplicants> createState() => _NewapplicantsState();
+  State<NewApplicants> createState() => _NewApplicantsState();
 }
 
-class _NewapplicantsState extends State<Newapplicants> {
-
-
-  Future<List<Onlineadmission>> showallstudent() async {
-   Ip ip = Ip();
-    final response =
-    await http.get(Uri.parse(ip.ipAddress+'/newapplicant'));
-    if (response.statusCode == 200) {
-      return objectsFromJson(response.body);
-    } else {
-      throw Exception("Failed");
-    }
+class _NewApplicantsState extends State<NewApplicants> {
+  @override
+  void initState() {
+    super.initState();
+    // Fetch students on load
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<NewApplicantsProvider>(context, listen: false).fetchStudents();
+    });
   }
-
 
   @override
   Widget build(BuildContext context) {
+    final provider = Provider.of<NewApplicantsProvider>(context);
+
     return Scaffold(
       appBar: AppBar(
-        title: Text("Student List"),
+        title: const Text("Student List"),
         backgroundColor: Colors.pink,
       ),
+      body: provider.isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : provider.error != null
+              ? Center(child: Text("Error: ${provider.error}"))
+              : provider.students.isEmpty
+                  ? const Center(child: Text("No students found."))
+                  : ListView.builder(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      itemCount: provider.students.length,
+                      itemBuilder: (context, index) {
+                        return _buildStudentCard(provider.students[index]);
+                      },
+                    ),
+    );
+  }
 
-      body: ListView(
-        children: [
-          Container(
-
-            width: double.infinity,
-
-            child: Image.network("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRYxmHcP_1VXwCa6C2w6JQmSP1k_Ut70OwZdQ&s"),
-          ),
-          Container(
-            height: 700,
-            child: FutureBuilder<List<Onlineadmission>>(
-              future: showallstudent(),
-              builder: (context, snapshot) {
-                // _alldata=snapshot.data!;
-                if (snapshot.hasData) {
-                  return ListView.builder(
-                    itemCount: snapshot.data!.length,
-                    itemBuilder: (BuildContext context, index) {
-                      return Center(
-                        child: Card(
-                          margin: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 15.0),
-
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                          elevation: 50,
-                          shadowColor: Colors.black,
-                          color: Colors.white,
-                          child: SizedBox(
-                            width: 350,
-                            height: 650,
-                            child: Padding(
-                              padding: EdgeInsets.all(0),
-                              child: Column(
-                                children: <Widget>[
-
-                                  CircleAvatar(
-                                    radius: 100,
-                                    backgroundImage: NetworkImage(snapshot.data![index].image.toString()),
-
-                                  ),
-                                  SizedBox(height: 5),
-                                  Text(
-                                    'Registration ID : ' +
-                                        snapshot.data![index].reg_no
-                                            .toString(),
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                    ),
-                                  ),
-                                  SizedBox(height: 5),
-                                  Text(
-                                    'Full Name : ' +
-                                        snapshot.data![index].full_name
-                                            .toString(),
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                    ),
-                                  ),
-                                  SizedBox(height: 5),
-                                  Text(
-                                    'Date of Birth : ' +
-                                        snapshot.data![index].dob.toString(),
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                    ),
-                                  ),
-                                  SizedBox(height: 5),
-                                  Text(
-                                    'Email : ' +
-                                        snapshot.data![index].email.toString(),
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                    ),
-                                  ),
-                                  SizedBox(height: 5),
-                                  Text(
-                                    'Mobile : ' +
-                                        snapshot.data![index].mob.toString(),
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                    ),
-                                  ),
-                                  SizedBox(height: 5),
-                                  Text(
-                                    'Gender : ' +
-                                        snapshot.data![index].gender.toString(),
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                    ),
-                                  ),
-                                  SizedBox(height: 5),
-                                  Text(
-                                    'Class : ' +
-                                        snapshot.data![index].class1.toString(),
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                    ),
-                                  ),
-                                  SizedBox(height: 5),
-                                  Text(
-                                    'Session : ' +
-                                        snapshot.data![index].section
-                                            .toString(),
-                                    style: TextStyle(
-                                      fontSize: 15,
-
-                                    ),
-                                  ),
-                                  SizedBox(height: 5),
-                                  Text(
-                                    'Present_address : ' +
-                                        snapshot.data![index].present_address.toString(),
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                    ),
-                                  ),
-                                  SizedBox(height: 5),
-                                  Text(
-                                    'permanent_address : ' +
-                                        snapshot.data![index].permanent_address
-                                            .toString(),
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                    ),
-                                  ),
-                                  SizedBox(height: 5),
-                                  Text(
-                                    'Permanent_address : ' +
-                                        snapshot.data![index].permanent_address
-                                            .toString(),
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                    ),
-                                  ),
-                                  SizedBox(height: 5),
-                                  Text(
-                                    'Session : ' +
-                                        snapshot.data![index].session
-                                            .toString(),
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                    ),
-                                  ),
-                                  SizedBox(height: 5),
-                                  Text(
-                                    'Username : ' +
-                                        snapshot.data![index].username
-                                            .toString(),
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                    ),
-                                  ),
-                                  SizedBox(height: 5),
-                                  Text(
-                                    'Password : ' +
-                                        snapshot.data![index].password
-                                            .toString(),
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                    ),
-                                  ),
-
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  );
-                } else if (snapshot.hasError) {
-                  return Text("Error");
-                } else {
-                  return CircularProgressIndicator();
-                }
-              },
+  Widget _buildStudentCard(Onlineadmission student) {
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 15.0),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 6,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            CircleAvatar(
+              radius: 60,
+              backgroundImage: NetworkImage(student.image ?? ''),
             ),
-          ),
+            const SizedBox(height: 12),
+            _buildInfoRow('Registration ID', student.reg_no),
+            _buildInfoRow('Full Name', student.full_name),
+            _buildInfoRow('Date of Birth', student.dob),
+            _buildInfoRow('Email', student.email),
+            _buildInfoRow('Mobile', student.mob),
+            _buildInfoRow('Gender', student.gender),
+            _buildInfoRow('Class', student.class1),
+            _buildInfoRow('Section', student.section),
+            _buildInfoRow('Session', student.session),
+            _buildInfoRow('Present Address', student.present_address),
+            _buildInfoRow('Permanent Address', student.permanent_address),
+            _buildInfoRow('Username', student.username),
+            _buildInfoRow('Password', student.password),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(String label, String? value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text("$label: ", style: const TextStyle(fontWeight: FontWeight.bold)),
+          Expanded(child: Text(value ?? '', overflow: TextOverflow.ellipsis)),
         ],
       ),
     );
   }
 }
-
-
-

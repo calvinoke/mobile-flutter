@@ -1,182 +1,156 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
-import 'package:school_management/model_class/Studenttable.dart';
-import 'package:school_management/model_class/ipAddress.dart';
+import 'package:provider/provider.dart';
+import 'package:mobile/model_class/Studenttable.dart';
+import 'add_student_screen.dart';
+import 'student_provider.dart';
 
-List<Studenttable> objectsFromJson(String str) => List<Studenttable>.from(
-    json.decode(str).map((x) => Studenttable.fromJson(x)));
-String objectsToJson(List<Studenttable> data) =>
-    json.encode(List<Studenttable>.from(data).map((x) => x.toJson()));
+class ShowAllStudentsScreen extends StatelessWidget {
+  const ShowAllStudentsScreen({super.key});
 
-class ShowAllStudent extends StatefulWidget {
-  const ShowAllStudent({super.key});
+  Widget _buildStudentCard(BuildContext context, Studenttable student) {
+    final provider = Provider.of<StudentProvider>(context, listen: false);
 
-  @override
-  State<ShowAllStudent> createState() => _ShowAllStudentState();
-}
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.0)),
+      elevation: 5,
+      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _infoRow(Icons.person, 'Full Name', student.full_name ?? ''),
+            _infoRow(Icons.cake, 'DOB', student.dob ?? ''),
+            _infoRow(Icons.email, 'Email', student.email ?? ''),
+            _infoRow(Icons.phone, 'Mobile', student.mob ?? ''),
+            _infoRow(Icons.wc, 'Gender', student.gender ?? ''),
+            _infoRow(Icons.class_, 'Class', student.class1 ?? ''),
+            _infoRow(Icons.school, 'Session', student.session ?? ''),
+            _infoRow(Icons.group, 'Section', student.section ?? ''),
+            _infoRow(Icons.check_circle, 'Status', student.status ?? ''),
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.edit, color: Colors.green),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => AddStudentScreen(student: student),
+                      ),
+                    ).then((_) => provider.fetchStudents());
+                  },
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete, color: Colors.red),
+                  onPressed: () async {
+                    final success = await provider.deleteStudent(student.id.toString());
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(success
+                            ? "Student deleted successfully"
+                            : "Failed to delete student"),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
-class _ShowAllStudentState extends State<ShowAllStudent> {
-  Future<List<Studenttable>> showAllStudent() async {
-    Ip ip = Ip();
-    final response = await http.get(Uri.parse('${ip.ipAddress}/getall'));
-    if (response.statusCode == 200) {
-      return objectsFromJson(response.body);
-    } else {
-      throw Exception("Failed to load student data");
-    }
+  Widget _infoRow(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Icon(icon, color: Colors.pink),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              '$label: $value',
+              style: const TextStyle(fontSize: 16),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Students Details"),
-        backgroundColor: Colors.pink,
-      ),
-      body: FutureBuilder<List<Studenttable>>(
-        future: showAllStudent(),
-        builder: (context, snapshot) {
-          if (snapshot.hasData) {
-            return ListView.builder(
-              itemCount: snapshot.data!.length,
-              itemBuilder: (BuildContext context, int index) {
-                var student = snapshot.data![index];
-                return Padding(
-                  padding: const EdgeInsets.symmetric(
-                      vertical: 8.0, horizontal: 16.0),
-                  child: Card(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20.0),
-                    ),
-                    elevation: 5,
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          Row(
-                            children: [
-                              Icon(Icons.perm_identity, color: Colors.pink),
-                              SizedBox(width: 10),
-                              Text(
-                                'Student ID: ${student.student_id}',
-                                style: TextStyle(fontSize: 16),
-                              ),
-                            ],
+    return ChangeNotifierProvider(
+      create: (_) => StudentProvider()..fetchStudents(),
+      child: Scaffold(
+        appBar: AppBar(title: const Text('Students Details')),
+        body: Consumer<StudentProvider>(
+          builder: (context, provider, _) {
+            return Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          decoration: const InputDecoration(
+                            prefixIcon: Icon(Icons.search),
+                            hintText: 'Search by name...',
+                            border: OutlineInputBorder(),
                           ),
-                          SizedBox(height: 10),
-                          Row(
-                            children: [
-                              Icon(Icons.person, color: Colors.pink),
-                              SizedBox(width: 10),
-                              Text(
-                                'Full Name: ${student.full_name}',
-                                style: TextStyle(fontSize: 16),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 10),
-                          Row(
-                            children: [
-                              Icon(Icons.cake, color: Colors.pink),
-                              SizedBox(width: 10),
-                              Text(
-                                'Date of Birth: ${student.dob}',
-                                style: TextStyle(fontSize: 16),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 10),
-                          Row(
-                            children: [
-                              Icon(Icons.email, color: Colors.pink),
-                              SizedBox(width: 10),
-                              Text(
-                                'Email: ${student.email}',
-                                style: TextStyle(fontSize: 16),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 10),
-                          Row(
-                            children: [
-                              Icon(Icons.phone, color: Colors.pink),
-                              SizedBox(width: 10),
-                              Text(
-                                'Mobile: ${student.mob}',
-                                style: TextStyle(fontSize: 16),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 10),
-                          Row(
-                            children: [
-                              Icon(Icons.wc, color: Colors.pink),
-                              SizedBox(width: 10),
-                              Text(
-                                'Gender: ${student.gender}',
-                                style: TextStyle(fontSize: 16),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 10),
-                          Row(
-                            children: [
-                              Icon(Icons.class_, color: Colors.pink),
-                              SizedBox(width: 10),
-                              Text(
-                                'Class: ${student.class1}',
-                                style: TextStyle(fontSize: 16),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 10),
-                          Row(
-                            children: [
-                              Icon(Icons.school, color: Colors.pink),
-                              SizedBox(width: 10),
-                              Text(
-                                'Session: ${student.session}',
-                                style: TextStyle(fontSize: 16),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 10),
-                          Row(
-                            children: [
-                              Icon(Icons.check_circle, color: Colors.pink),
-                              SizedBox(width: 10),
-                              Text(
-                                'Status: ${student.status}',
-                                style: TextStyle(fontSize: 16),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 10),
-                          Row(
-                            children: [
-                              Icon(Icons.group, color: Colors.pink),
-                              SizedBox(width: 10),
-                              Text(
-                                'Section: ${student.section}',
-                                style: TextStyle(fontSize: 16),
-                              ),
-                            ],
-                          ),
-                        ],
+                          onChanged: provider.updateSearchQuery,
+                        ),
                       ),
-                    ),
+                      const SizedBox(width: 10),
+                      DropdownButton<String>(
+                        value: provider.selectedClass,
+                        items: provider.classes
+                            .map((cls) => DropdownMenuItem(
+                                  value: cls,
+                                  child: Text(cls),
+                                ))
+                            .toList(),
+                        onChanged: (val) {
+                          if (val != null) provider.updateSelectedClass(val);
+                        },
+                      ),
+                    ],
                   ),
-                );
-              },
+                ),
+                Expanded(
+                  child: provider.filteredStudents.isEmpty
+                      ? const Center(child: Text("No students found"))
+                      : ListView.builder(
+                          itemCount: provider.filteredStudents.length,
+                          itemBuilder: (context, index) {
+                            return _buildStudentCard(
+                                context, provider.filteredStudents[index]);
+                          },
+                        ),
+                ),
+              ],
             );
-          } else if (snapshot.hasError) {
-            return Center(child: Text("Error loading student data"));
-          } else {
-            return Center(child: CircularProgressIndicator());
-          }
-        },
+          },
+        ),
+        floatingActionButton: Consumer<StudentProvider>(
+          builder: (context, provider, _) => FloatingActionButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const AddStudentScreen(),
+                ),
+              ).then((_) => provider.fetchStudents());
+            },
+            child: const Icon(Icons.add),
+          ),
+        ),
       ),
     );
   }

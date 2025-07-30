@@ -1,40 +1,35 @@
 class Alluser {
-
-  String? username;
-  String? name;
-  String? email;
-  String? password;
-  String? image;
-  String? role;
-
+  final String username;
+  final String name;
+  final String email;
+  final String image;
+  final String role;
+  final String password;
 
   Alluser({
     required this.username,
     required this.name,
     required this.email,
-    required this.password,
     required this.image,
     required this.role,
-
+    required this.password,
   });
+
   factory Alluser.fromJson(Map<String, dynamic> json) => Alluser(
-    username: json['username'],
-    name: json['name'],
-    email: json['email'],
-    password: json['password'],
-    image: json['image'],
-    role: json['role'],
+        username: json['username'],
+        name: json['name'],
+        email: json['email'],
+        image: json['image'],
+        role: json['role'],
+        password: json['password'] ?? '',
+      );
 
-  );
-  Map<String, dynamic> toJson() {
-    return {
-      "username": username,
-      "name": name,
-      "email": email,
-      "password": password,
-      "image": image,
-      "role": role,
-
-    };
-  }
+  Map<String, dynamic> toJson() => {
+        "username": username,
+        "name": name,
+        "email": email,
+        "image": image,
+        "role": role,
+        "password": password, 
+      };
 }

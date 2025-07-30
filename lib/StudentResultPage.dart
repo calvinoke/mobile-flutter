@@ -1,142 +1,7 @@
-// import 'package:flutter/material.dart';
-//
-// class StudentResultPage extends StatefulWidget {
-//   @override
-//   _StudentResultPageState createState() => _StudentResultPageState();
-// }
-//
-// class _StudentResultPageState extends State<StudentResultPage> {
-//   final TextEditingController _studentIdController = TextEditingController();
-//   final TextEditingController _classController = TextEditingController();
-//
-//   // Dummy data for demonstration
-//   Map<String, dynamic> studentResult = {
-//     'Bangla': 40,
-//     'English': 30,
-//     'Math': 80,
-//     'Science': 20,
-//     'Total': 170,
-//     'Grade': 4.34,
-//     'Result': 'Pass'
-//   };
-//
-//   void _searchResult() {
-//     // Logic to fetch the result based on student ID and class
-//
-//     setState(() {
-//       // Assuming result fetched and updated in studentResult
-//     });
-//   }
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(
-//         title: Text('Student Result'),
-//       ),
-//       body: Padding(
-//         padding: const EdgeInsets.all(16.0),
-//         child: Column(
-//           children: [
-//             Text(
-//               'Search Result',
-//               style: TextStyle(
-//                 fontSize: 24,
-//                 fontWeight: FontWeight.bold,
-//                 color: Colors.blueAccent,
-//               ),
-//             ),
-//             SizedBox(height: 20),
-//             TextField(
-//               controller: _studentIdController,
-//               decoration: InputDecoration(
-//                 labelText: 'Student ID',
-//                 border: OutlineInputBorder(),
-//                 prefixIcon: Icon(Icons.person),
-//               ),
-//             ),
-//             SizedBox(height: 20),
-//             TextField(
-//               controller: _classController,
-//               decoration: InputDecoration(
-//                 labelText: 'Class',
-//                 border: OutlineInputBorder(),
-//                 prefixIcon: Icon(Icons.school),
-//               ),
-//             ),
-//             SizedBox(height: 20),
-//             ElevatedButton(
-//               onPressed: _searchResult,
-//               child: Text('Search'),
-//               style: ElevatedButton.styleFrom(
-//                 padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-//                 textStyle: TextStyle(fontSize: 18),
-//               ),
-//             ),
-//             SizedBox(height: 30),
-//             if (studentResult.isNotEmpty)
-//               Card(
-//                 elevation: 5,
-//                 shape: RoundedRectangleBorder(
-//                   borderRadius: BorderRadius.circular(15),
-//                 ),
-//                 child: Padding(
-//                   padding: const EdgeInsets.all(16.0),
-//                   child: Column(
-//                     crossAxisAlignment: CrossAxisAlignment.start,
-//                     children: [
-//                       Text(
-//                         'Result Details',
-//                         style: TextStyle(
-//                           fontSize: 22,
-//                           fontWeight: FontWeight.bold,
-//                           color: Colors.teal,
-//                         ),
-//                       ),
-//                       SizedBox(height: 10),
-//                       ...studentResult.entries.map((entry) {
-//                         return Padding(
-//                           padding: const EdgeInsets.symmetric(vertical: 4.0),
-//                           child: Text(
-//                             '${entry.key}: ${entry.value}',
-//                             style: TextStyle(
-//                               fontSize: 18,
-//                               fontWeight: FontWeight.w500,
-//                             ),
-//                           ),
-//                         );
-//                       }).toList(),
-//                       SizedBox(height: 10),
-//                       Text(
-//                         'Overall Result: ${studentResult['Result']}',
-//                         style: TextStyle(
-//                           fontSize: 18,
-//                           fontWeight: FontWeight.bold,
-//                           color: studentResult['Result'] == 'Pass'
-//                               ? Colors.green
-//                               : Colors.red,
-//                         ),
-//                       ),
-//                     ],
-//                   ),
-//                 ),
-//               ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-// }
-//
-// void main() {
-//   runApp(MaterialApp(
-//     home: StudentResultPage(),
-//   ));
-// }
-
-
-
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:http/http.dart' as http;
 
 class StudentResultPage extends StatefulWidget {
   @override
@@ -146,180 +11,136 @@ class StudentResultPage extends StatefulWidget {
 class _StudentResultPageState extends State<StudentResultPage> {
   final TextEditingController _studentIdController = TextEditingController();
   final TextEditingController _classController = TextEditingController();
+  final TextEditingController _scoreController = TextEditingController();
+  final TextEditingController _resultIdController = TextEditingController(); // For update/delete
 
-  // Dummy data representing multiple students' results
-  final List<Map<String, dynamic>> studentResults = [
-    {
-      'studentId': '101',
-      'class': '1st',
-      'Bangla': 50,
-      'English': 50,
-      'Math': 50,
-      'Science': 50,
-      'Total': 200,
-      'Grade': 3.00,
-      'Result': 'Pass'
-    },
-    {
-      'studentId': '102',
-      'class': '2nd',
-      'Bangla': 80,
-      'English': 80,
-      'Math': 80,
-      'Science': 80,
-      'Total': 320,
-      'Grade': 5.00,
-      'Result': 'fail'
-    },
-    {
-      'studentId': '106',
-      'class': '6th',
-      'Bangla': 50,
-      'English': 45,
-      'Math': 75,
-      'Science': 40,
-      'Total': 210,
-      'Grade': 4.75,
-      'Result': 'Pass'
-    },
-    {
-      'studentId': '109',
-      'class': '9th',
-      'Bangla': 70,
-      'English': 70,
-      'General Math': 70,
-      'Religion': 70,
+  Map<String, dynamic>? resultData;
+  String? errorMessage;
+  bool isLoading = false;
 
-      'Physics': 70,
-      'Chemistry': 70,
-      'Biology': 32,
+  String get baseUrl => dotenv.env['API_BASE_URL'] ?? '';
 
-      'Total': 452,
-      'Grade': 3.43,
-      'Result': 'Fail'
-    }
-    // Add more student data here
-  ];
+  void _setLoading(bool value) => setState(() => isLoading = value);
 
-  Map<String, dynamic>? searchedResult;
+  Future<void> createResult() async {
+    _setLoading(true);
+    final url = Uri.parse('$baseUrl/results');
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({
+        'student_id': int.tryParse(_studentIdController.text),
+        'class1': _classController.text,
+        'score': int.tryParse(_scoreController.text),
+        'Result': 'Pass', // Example value
+      }),
+    );
+    handleResponse(response, 'created');
+  }
 
-  get nul => null;
+  Future<void> getResult() async {
+    _setLoading(true);
+    final studentId = _studentIdController.text;
+    final className = _classController.text;
+    final url = Uri.parse('$baseUrl/results?studentId=$studentId&class=$className');
+    final response = await http.get(url);
+    handleResponse(response, 'fetched');
+  }
 
-  void _searchResult() {
-    String studentId = _studentIdController.text.trim();
-    String className = _classController.text.trim();
+  Future<void> updateResult() async {
+    _setLoading(true);
+    final id = _resultIdController.text;
+    final url = Uri.parse('$baseUrl/results/$id');
+    final response = await http.put(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({
+        'score': int.tryParse(_scoreController.text),
+        'Result': 'Pass', // Or recalculate
+      }),
+    );
+    handleResponse(response, 'updated');
+  }
 
+  Future<void> deleteResult() async {
+    _setLoading(true);
+    final id = _resultIdController.text;
+    final url = Uri.parse('$baseUrl/results/$id');
+    final response = await http.delete(url);
+    handleResponse(response, 'deleted');
+  }
+
+  void handleResponse(http.Response response, String action) {
     setState(() {
-      searchedResult = studentResults.firstWhere(
-            (student) => student['studentId'] == studentId && student['class'] == className,
-        orElse: () => nul,
-      );
+      isLoading = false;
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        if (response.body.isNotEmpty) {
+          resultData = json.decode(response.body);
+        } else {
+          resultData = {'message': 'Result $action successfully'};
+        }
+        errorMessage = null;
+      } else {
+        errorMessage = 'Failed to $action result: ${response.body}';
+        resultData = null;
+      }
     });
+  }
+
+  Widget buildTextField(TextEditingController controller, String label, IconData icon) {
+    return TextField(
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: label,
+        border: const OutlineInputBorder(),
+        prefixIcon: Icon(icon),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Student Result'),
-      ),
-      body: Padding(
+      appBar: AppBar(title: const Text('Student Result CRUD')),
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            Text(
-              'Search Result',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.blueAccent,
-              ),
+            buildTextField(_studentIdController, 'Student ID', Icons.person),
+            const SizedBox(height: 10),
+            buildTextField(_classController, 'Class', Icons.school),
+            const SizedBox(height: 10),
+            buildTextField(_scoreController, 'Score', Icons.score),
+            const SizedBox(height: 10),
+            buildTextField(_resultIdController, 'Result ID (for update/delete)', Icons.fingerprint),
+            const SizedBox(height: 20),
+
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                ElevatedButton(onPressed: isLoading ? null : createResult, child: const Text('Create')),
+                ElevatedButton(onPressed: isLoading ? null : getResult, child: const Text('Read')),
+                ElevatedButton(onPressed: isLoading ? null : updateResult, child: const Text('Update')),
+                ElevatedButton(onPressed: isLoading ? null : deleteResult, child: const Text('Delete')),
+              ],
             ),
-            SizedBox(height: 20),
-            TextField(
-              controller: _studentIdController,
-              decoration: InputDecoration(
-                labelText: 'Student ID',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.person),
-              ),
-            ),
-            SizedBox(height: 20),
-            TextField(
-              controller: _classController,
-              decoration: InputDecoration(
-                labelText: 'Class',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.school),
-              ),
-            ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _searchResult,
-              child: Text('Search'),
-              style: ElevatedButton.styleFrom(
-                padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                textStyle: TextStyle(fontSize: 18),
-              ),
-            ),
-            SizedBox(height: 30),
-            if (searchedResult != null)
+            const SizedBox(height: 20),
+
+            if (isLoading) const CircularProgressIndicator(),
+            if (errorMessage != null)
+              Text(errorMessage!, style: const TextStyle(color: Colors.red, fontSize: 16)),
+            if (resultData != null)
               Card(
-                elevation: 5,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
+                margin: const EdgeInsets.only(top: 16),
                 child: Padding(
-                  padding: const EdgeInsets.all(16.0),
+                  padding: const EdgeInsets.all(12.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Result Details',
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.teal,
-                        ),
-                      ),
-                      SizedBox(height: 10),
-                      ...searchedResult!.entries.map((entry) {
-                        if (entry.key != 'studentId' && entry.key != 'class') {
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 4.0),
-                            child: Text(
-                              '${entry.key}: ${entry.value}',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          );
-                        }
-                        return SizedBox.shrink();
-                      }).toList(),
-                      SizedBox(height: 10),
-                      Text(
-                        'Overall Result: ${searchedResult!['Result']}',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: searchedResult!['Result'] == 'Pass'
-                              ? Colors.green
-                              : Colors.red,
-                        ),
-                      ),
-                    ],
+                    children: resultData!.entries.map((entry) {
+                      return Text('${entry.key}: ${entry.value}', style: const TextStyle(fontSize: 16));
+                    }).toList(),
                   ),
-                ),
-              )
-            else if (searchedResult == null && _studentIdController.text.isNotEmpty && _classController.text.isNotEmpty)
-              Text(
-                'No result found for the given Student ID and Class.',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.red,
                 ),
               ),
           ],
@@ -328,10 +149,3 @@ class _StudentResultPageState extends State<StudentResultPage> {
     );
   }
 }
-
-void main() {
-  runApp(MaterialApp(
-    home: StudentResultPage(),
-  ));
-}
-

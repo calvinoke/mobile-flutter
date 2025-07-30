@@ -1,181 +1,180 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
-import 'package:school_management/main.dart';
-import 'package:school_management/model_class/Onlineadmission.dart';
-import 'package:school_management/model_class/ipAddress.dart';
+import 'package:provider/provider.dart';
+import 'package:mobile/provider/admission_form_provider.dart';
 
-List<Onlineadmission> objectsFromJson(String str) => List<Onlineadmission>.from(
-    json.decode(str).map((x) => Onlineadmission.fromJson(x)));
-String objectsToJson(List<Onlineadmission> data) =>
-    json.encode(List<Onlineadmission>.from(data).map((x) => x.toJson()));
+class AdmissionFormScreen extends StatelessWidget {
+  const AdmissionFormScreen({super.key});
 
-class Admissionform extends StatefulWidget {
-  const Admissionform({super.key});
-
-  @override
-  State<Admissionform> createState() => _AdmissionformState();
-}
-
-class _AdmissionformState extends State<Admissionform> {
-  final TextEditingController _reg_no = TextEditingController();
-  final TextEditingController _full_name = TextEditingController();
-  final TextEditingController _dob = TextEditingController();
-  final TextEditingController _email = TextEditingController();
-  final TextEditingController _mob = TextEditingController();
-  final TextEditingController _gender = TextEditingController();
-  final TextEditingController _fathername = TextEditingController();
-  final TextEditingController _mothername = TextEditingController();
-  final TextEditingController _class1 = TextEditingController();
-  final TextEditingController _section = TextEditingController();
-  final TextEditingController _present_address = TextEditingController();
-  final TextEditingController _permanent_address = TextEditingController();
-  final TextEditingController _username = TextEditingController();
-  final TextEditingController _session = TextEditingController();
-  final TextEditingController _password = TextEditingController();
-  final TextEditingController _images = TextEditingController();
-
-  Future<Onlineadmission?> allStudentFormfilup() async {
-    Onlineadmission s = Onlineadmission(
-      reg_no: int.parse(_reg_no.text),
-      full_name: _full_name.text,
-      dob: _dob.text,
-      email: _email.text,
-      mob: _mob.text,
-      gender: _gender.text,
-      fathername: _fathername.text,
-      mothername: _mothername.text,
-      class1: _class1.text,
-      section: _section.text,
-      present_address: _present_address.text,
-      permanent_address: _permanent_address.text,
-      username: _username.text,
-      session: _session.text,
-      password: _password.text,
-      image: _images.text,
+  Widget buildTextField({
+    required String label,
+    required String keyName,
+    required IconData icon,
+    bool obscure = false,
+    required AdmissionFormProvider formProvider,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: TextFormField(
+        controller: formProvider.controllers[keyName],
+        obscureText: obscure,
+        decoration: InputDecoration(
+          labelText: label,
+          prefixIcon: Icon(icon, color: Colors.teal),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+          filled: true,
+          fillColor: Colors.grey[200],
+        ),
+        validator: (value) =>
+            value == null || value.isEmpty ? 'Required field' : null,
+      ),
     );
-    Ip ip = Ip();
-    final response = await http.post(
-      Uri.parse(ip.ipAddress + '/form'),
-      body: jsonEncode(s.toJson()),
-      headers: {"Content-Type": "application/json"},
-    );
-
-    if (response.statusCode == 200) {
-      return Onlineadmission.fromJson(jsonDecode(response.body));
-    } else {
-      print("Failed to sign up. Status code: ${response.statusCode}");
-      return null;
-    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final formProvider = context.watch<AdmissionFormProvider>();
+
     return Scaffold(
       appBar: AppBar(
-        title: Text('Admission Form'),
+        title: const Text('Admission Form'),
         backgroundColor: Colors.teal,
       ),
       body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Form(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: <Widget>[
-                buildTextField(
-                    _reg_no, 'Registration No', Icons.assignment_ind),
-                buildTextField(_full_name, 'Full Name', Icons.person),
-                buildTextField(_dob, 'Date of Birth', Icons.cake),
-                buildTextField(_email, 'Email', Icons.email),
-                buildTextField(_mob, 'Mobile', Icons.phone),
-                buildTextField(_gender, 'Gender', Icons.wc),
-                buildTextField(_fathername, 'Father Name', Icons.person),
-                buildTextField(_mothername, 'Mother Name', Icons.person),
-                buildTextField(_class1, 'Class', Icons.class_),
-                buildTextField(_section, 'Section', Icons.account_tree),
-                buildTextField(_present_address, 'Present Address', Icons.home),
-                buildTextField(
-                    _permanent_address, 'Permanent Address', Icons.home),
-                buildTextField(_username, 'Username', Icons.account_circle),
-                buildTextField(_session, 'Session', Icons.date_range),
-                buildTextField(_password, 'Password', Icons.lock,
-                    obscureText: true),
-                buildTextField(_images, 'Image URL', Icons.image),
-                SizedBox(height: 20),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.teal,
-                    padding: EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
+        padding: const EdgeInsets.all(16),
+        child: Form(
+          key: formProvider.formKey,
+          child: Column(
+            children: [
+              buildTextField(
+                label: 'Registration No',
+                keyName: 'reg_no',
+                icon: Icons.assignment_ind,
+                formProvider: formProvider,
+              ),
+              buildTextField(
+                label: 'Full Name',
+                keyName: 'full_name',
+                icon: Icons.person,
+                formProvider: formProvider,
+              ),
+              buildTextField(
+                label: 'Date of Birth',
+                keyName: 'dob',
+                icon: Icons.cake,
+                formProvider: formProvider,
+              ),
+              buildTextField(
+                label: 'Email',
+                keyName: 'email',
+                icon: Icons.email,
+                formProvider: formProvider,
+              ),
+              buildTextField(
+                label: 'Mobile',
+                keyName: 'mob',
+                icon: Icons.phone,
+                formProvider: formProvider,
+              ),
+              buildTextField(
+                label: 'Gender',
+                keyName: 'gender',
+                icon: Icons.wc,
+                formProvider: formProvider,
+              ),
+              buildTextField(
+                label: 'Father Name',
+                keyName: 'fathername',
+                icon: Icons.person,
+                formProvider: formProvider,
+              ),
+              buildTextField(
+                label: 'Mother Name',
+                keyName: 'mothername',
+                icon: Icons.person,
+                formProvider: formProvider,
+              ),
+              buildTextField(
+                label: 'Class',
+                keyName: 'class1',
+                icon: Icons.class_,
+                formProvider: formProvider,
+              ),
+              buildTextField(
+                label: 'Section',
+                keyName: 'section',
+                icon: Icons.account_tree,
+                formProvider: formProvider,
+              ),
+              buildTextField(
+                label: 'Present Address',
+                keyName: 'present_address',
+                icon: Icons.home,
+                formProvider: formProvider,
+              ),
+              buildTextField(
+                label: 'Permanent Address',
+                keyName: 'permanent_address',
+                icon: Icons.home,
+                formProvider: formProvider,
+              ),
+              buildTextField(
+                label: 'Username',
+                keyName: 'username',
+                icon: Icons.account_circle,
+                formProvider: formProvider,
+              ),
+              buildTextField(
+                label: 'Session',
+                keyName: 'session',
+                icon: Icons.date_range,
+                formProvider: formProvider,
+              ),
+              buildTextField(
+                label: 'Password',
+                keyName: 'password',
+                icon: Icons.lock,
+                obscure: true,
+                formProvider: formProvider,
+              ),
+              buildTextField(
+                label: 'Image URL',
+                keyName: 'image',
+                icon: Icons.image,
+                formProvider: formProvider,
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.teal,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Text('Submit', style: TextStyle(fontSize: 18)),
-                  onPressed: () async {
-                    if (_reg_no.text.isEmpty ||
-                        _full_name.text.isEmpty ||
-                        _dob.text.isEmpty ||
-                        _email.text.isEmpty ||
-                        _mob.text.isEmpty ||
-                        _gender.text.isEmpty ||
-                        _fathername.text.isEmpty ||
-                        _mothername.text.isEmpty ||
-                        _class1.text.isEmpty ||
-                        _section.text.isEmpty ||
-                        _present_address.text.isEmpty ||
-                        _permanent_address.text.isEmpty ||
-                        _username.text.isEmpty ||
-                        _session.text.isEmpty ||
-                        _password.text.isEmpty ||
-                        _images.text.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Please fill all fields')),
-                      );
-                      return;
-                    }
-
-                    Onlineadmission? newUser = await allStudentFormfilup();
-
-                    if (newUser != null) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Submit Successfully')),
-                      );
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => MyApp()),
-                      );
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Submit failed')),
-                      );
-                    }
-                  },
                 ),
-              ],
-            ),
+                onPressed: () async {
+                  if (formProvider.formKey.currentState!.validate()) {
+                    final result = await formProvider.submitForm();
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(result != null
+                              ? 'Submitted successfully'
+                              : 'Submission failed'),
+                        ),
+                      );
+                      if (result != null) {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (_) => const MyApp()),
+                        );
+                      }
+                    }
+                  }
+                },
+                child: const Text('Submit', style: TextStyle(fontSize: 18)),
+              ),
+            ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget buildTextField(
-      TextEditingController controller, String labelText, IconData icon,
-      {bool obscureText = false}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: TextFormField(
-        controller: controller,
-        obscureText: obscureText,
-        decoration: InputDecoration(
-          labelText: labelText,
-          prefixIcon: Icon(icon, color: Colors.teal),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-          filled: true,
-          fillColor: Colors.grey[200],
         ),
       ),
     );

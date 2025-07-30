@@ -1,16 +1,8 @@
 import 'package:flutter/material.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'package:school_management/adminpanel.dart';
-import 'package:school_management/main.dart';
-import 'package:school_management/model_class/Alluser.dart';
-import 'package:school_management/model_class/ipAddress.dart';
-import 'package:school_management/studenttable.dart';
-
-List<Alluser> objectsFromJson(String str) =>
-    List<Alluser>.from(json.decode(str).map((x) => Alluser.fromJson(x)));
-String objectsToJson(List<Alluser> data) =>
-    json.encode(List<Alluser>.from(data).map((x) => x.toJson()));
+import 'package:provider/provider.dart';
+import 'package:mobile/model_class/Alluser.dart';
+import 'package:mobile/providers/user_provider.dart';
+import 'package:mobile/main.dart';
 
 class Signup extends StatefulWidget {
   const Signup({super.key});
@@ -20,152 +12,101 @@ class Signup extends StatefulWidget {
 }
 
 class _SignupState extends State<Signup> {
-  TextEditingController _username = TextEditingController();
-  TextEditingController _name = TextEditingController();
-  TextEditingController _email = TextEditingController();
-  TextEditingController _password = TextEditingController();
-  TextEditingController _image = TextEditingController();
-  TextEditingController _role = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
 
-  Future<Alluser?> allUserSignup() async {
-    Alluser s = Alluser(
-      username: _username.text,
-      name: _name.text,
-      email: _email.text,
-      password: _password.text,
-      image: _image.text,
-      role: _role.text,
-    );
-   Ip ip = Ip();
-    final response = await http.post(
-      Uri.parse(ip.ipAddress+'/save'),
-      body: jsonEncode(s.toJson()),
-      headers: {"Content-Type": "application/json"},
-    );
+  final TextEditingController _username = TextEditingController();
+  final TextEditingController _name = TextEditingController();
+  final TextEditingController _email = TextEditingController();
+  final TextEditingController _password = TextEditingController();
+  final TextEditingController _image = TextEditingController();
+  final TextEditingController _role = TextEditingController();
 
-    if (response.statusCode == 200) {
-      return Alluser.fromJson(jsonDecode(response.body));
-    } else {
-      print("Failed to sign up. Status code: ${response.statusCode}");
-      return null;
+  Future<void> _handleSignup() async {
+    if (_formKey.currentState!.validate()) {
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+
+      Alluser newUser = Alluser(
+        username: _username.text,
+        name: _name.text,
+        email: _email.text,
+        password: _password.text,
+        image: _image.text,
+        role: _role.text,
+      );
+
+      final user = await userProvider.signup(newUser);
+      if (user != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Signed up as ${user.role}, confirmation email sent.')),
+        );
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const MyHomePage(title: 'Login')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Signup failed. Please try again.')),
+        );
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Sign Up'),
-      ),
+      appBar: AppBar(title: const Text('Sign Up')),
       body: Form(
+        key: _formKey,
         child: Padding(
-          padding: EdgeInsets.all(10),
+          padding: const EdgeInsets.all(10),
           child: ListView(
-            children: <Widget>[
-              Padding(
-                padding: EdgeInsets.all(5),
-                child: TextFormField(
-                  controller: _username,
-                  decoration: InputDecoration(
-                    labelText: 'Username',
-                    prefixIcon: Icon(Icons.person,color: Colors.blue,),
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(5)),
-                  ),
-                ),
+            children: [
+              _buildTextField(
+                controller: _username,
+                label: 'Username',
+                icon: Icons.person,
+                validator: (value) => value!.isEmpty ? 'Username is required' : null,
               ),
-              Padding(
-                padding: EdgeInsets.all(5),
-                child: TextFormField(
-                  controller: _name,
-                  decoration: InputDecoration(
-                    labelText: 'Name',
-                    prefixIcon: Icon(Icons.check_circle,color: Colors.blue,),
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(5)),
-                  ),
-                ),
+              _buildTextField(
+                controller: _name,
+                label: 'Name',
+                icon: Icons.check_circle,
+                validator: (value) => value!.isEmpty ? 'Name is required' : null,
               ),
-              Padding(
-                padding: EdgeInsets.all(5),
-                child: TextFormField(
-                  controller: _email,
-                  decoration: InputDecoration(
-                    labelText: 'Email',
-                    prefixIcon: Icon(Icons.email,color: Colors.blue,),
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(5)),
-                  ),
-                ),
+              _buildTextField(
+                controller: _email,
+                label: 'Email',
+                icon: Icons.email,
+                validator: (value) {
+                  if (value == null || value.isEmpty) return 'Email is required';
+                  final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
+                  if (!emailRegex.hasMatch(value)) return 'Enter a valid email';
+                  return null;
+                },
               ),
-              Padding(
-                padding: EdgeInsets.all(5),
-                child: TextFormField(
-                  controller: _password,
-                  decoration: InputDecoration(
-                    labelText: 'Password',
-                    prefixIcon: Icon(Icons.lock,color: Colors.blue,),
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(5)),
-                  ),
-                  obscureText: true,
-                ),
+              _buildTextField(
+                controller: _password,
+                label: 'Password',
+                icon: Icons.lock,
+                obscure: true,
+                validator: (value) =>
+                    value != null && value.length < 6 ? 'Password must be at least 6 characters' : null,
               ),
-              Padding(
-                padding: EdgeInsets.all(5),
-                child: TextFormField(
-                  controller: _image,
-                  decoration: InputDecoration(
-                    labelText: 'Image',
-                    prefixIcon: Icon(Icons.image,color: Colors.blue,),
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(5)),
-                  ),
-                ),
+              _buildTextField(
+                controller: _image,
+                label: 'Image URL',
+                icon: Icons.image,
+                validator: (value) => value!.isEmpty ? 'Image URL is required' : null,
               ),
-              Padding(
-                padding: EdgeInsets.all(5),
-                child: TextFormField(
-                  controller: _role,
-                  decoration: InputDecoration(
-                    labelText: 'Role',
-                    prefixIcon: Icon(Icons.post_add,color: Colors.blue,),
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(5)),
-                  ),
-                ),
+              _buildTextField(
+                controller: _role,
+                label: 'Role',
+                icon: Icons.post_add,
+                validator: (value) => value!.isEmpty ? 'Role is required' : null,
               ),
               ElevatedButton(
-                child: Text('Sign Up'),
-                onPressed: () async {
-                  if (_username.text.isEmpty ||
-                      _name.text.isEmpty ||
-                      _email.text.isEmpty ||
-                      _password.text.isEmpty ||
-                      _image.text.isEmpty ||
-                      _role.text.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Please fill all fields')),
-                    );
-                    return;
-                  }
-
-                  Alluser? newUser = await allUserSignup();
-
-                  if (newUser != null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Sign up successful')),
-                    );
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => MyApp()),
-                    );
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Sign up failed')),
-                    );
-                  }
-                },
+                onPressed: _handleSignup,
+                child: const Text('Sign Up'),
               ),
             ],
           ),
@@ -173,6 +114,26 @@ class _SignupState extends State<Signup> {
       ),
     );
   }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    bool obscure = false,
+    String? Function(String?)? validator,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.all(5),
+      child: TextFormField(
+        controller: controller,
+        obscureText: obscure,
+        validator: validator,
+        decoration: InputDecoration(
+          labelText: label,
+          prefixIcon: Icon(icon, color: Colors.blue),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(5)),
+        ),
+      ),
+    );
+  }
 }
-
-
