@@ -1,15 +1,15 @@
-import 'dart:convert'; // For encoding image as base64
-import 'dart:io'; // For working with file system
+import 'dart:convert'; 
+import 'dart:io'; 
 
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http; // For HTTP requests
-import 'package:image_picker/image_picker.dart'; // For image picking from gallery
-import 'package:flutter_dotenv/flutter_dotenv.dart'; // For accessing environment variables
-import 'package:mobile/model_class/Studenttable.dart'; // Model class for Student
+import 'package:http/http.dart' as http; 
+import 'package:image_picker/image_picker.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart'; 
+import 'package:mobile/model_class/Studenttable.dart'; 
 
 // Stateful widget for adding or editing a student
 class AddStudentScreen extends StatefulWidget {
-  final Studenttable? student; // null means it's a new student form
+  final Studenttable? student; 
 
   const AddStudentScreen({super.key, this.student});
 
