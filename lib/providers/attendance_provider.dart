@@ -1,12 +1,10 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:mobile/model_class/AttendanceInfo.dart';
+import 'package:mobile/model_class/attendanceinfo.dart';
 
 class AttendanceProvider extends ChangeNotifier {
-  // Controllers for attendance input form fields
   final studentIdController = TextEditingController();
   final studentNameController = TextEditingController();
   final classController = TextEditingController();
@@ -17,19 +15,21 @@ class AttendanceProvider extends ChangeNotifier {
 
   bool isLoading = false;
 
-  // List and status for attendance records fetched from backend
   List<AttendanceInfo> _attendances = [];
+
   bool _isFetching = false;
-  String? _fetchError;
+  String? _error;
 
-  List<AttendanceInfo> get attendances => _attendances;
+  // Use this getter name consistently:
+  List<AttendanceInfo> get attendanceList => _attendances;
+
   bool get isFetching => _isFetching;
-  String? get fetchError => _fetchError;
+  bool get loading => isLoading;
+  String? get error => _error;
 
-  /// Fetch all attendance records
   Future<void> fetchAttendance() async {
     _isFetching = true;
-    _fetchError = null;
+    _error = null;
     notifyListeners();
 
     try {
@@ -43,11 +43,11 @@ class AttendanceProvider extends ChangeNotifier {
           json.decode(response.body).map((x) => AttendanceInfo.fromJson(x)),
         );
       } else {
-        _fetchError = 'Failed to load attendance data: ${response.statusCode}';
+        _error = 'Failed to load attendance data: ${response.statusCode}';
         _attendances = [];
       }
     } catch (e) {
-      _fetchError = 'Error: $e';
+      _error = 'Error: $e';
       _attendances = [];
     } finally {
       _isFetching = false;
@@ -55,10 +55,42 @@ class AttendanceProvider extends ChangeNotifier {
     }
   }
 
-  /// Fetch student details by ID and populate form fields
+  Future<void> searchByStudentId(String studentId) async {
+    if (studentId.isEmpty) {
+      _attendances = [];
+      _error = null;
+      notifyListeners();
+      return;
+    }
+
+    isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final baseUrl = dotenv.env['API_BASE_URL'] ?? '';
+      if (baseUrl.isEmpty) throw Exception("API_BASE_URL not found");
+
+      final response = await http.get(Uri.parse('$baseUrl/studentattendance/$studentId'));
+
+      if (response.statusCode == 200) {
+        final List<dynamic> jsonData = json.decode(response.body);
+        _attendances = jsonData.map((item) => AttendanceInfo.fromJson(item)).toList();
+      } else {
+        _error = 'Failed to fetch attendance: ${response.statusCode}';
+        _attendances = [];
+      }
+    } catch (e) {
+      _error = 'Error: $e';
+      _attendances = [];
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
   Future<void> studentIdChanged() async {
     final studentId = studentIdController.text.trim();
-
     final baseUrl = dotenv.env['API_BASE_URL'] ?? '';
     if (baseUrl.isEmpty) {
       debugPrint('API_BASE_URL not found in .env');
@@ -105,14 +137,12 @@ class AttendanceProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Submit attendance record to backend
   Future<bool> takeAttendance() async {
-    if (attendanceDate == null || attendanceStatus == null) {
-      return false;
-    }
+    if (attendanceDate == null || attendanceStatus == null) return false;
 
     final attendance = AttendanceInfo(
-      studentId: studentIdController.text.trim(),
+      attendanceId: null,
+      studentId: int.tryParse(studentIdController.text.trim()),
       studentName: studentNameController.text.trim(),
       class1: classController.text.trim(),
       section: sectionController.text.trim(),
@@ -121,9 +151,7 @@ class AttendanceProvider extends ChangeNotifier {
     );
 
     final baseUrl = dotenv.env['API_BASE_URL'] ?? '';
-    if (baseUrl.isEmpty) {
-      return false;
-    }
+    if (baseUrl.isEmpty) return false;
 
     isLoading = true;
     notifyListeners();
@@ -135,21 +163,18 @@ class AttendanceProvider extends ChangeNotifier {
         body: jsonEncode(attendance.toJson()),
       );
 
-      isLoading = false;
-      notifyListeners();
-
       if (response.statusCode == 200) {
         resetForm();
         return true;
-      } else {
-        return false;
       }
     } catch (e) {
       debugPrint('Error submitting attendance: $e');
+    } finally {
       isLoading = false;
       notifyListeners();
-      return false;
     }
+
+    return false;
   }
 
   void resetForm() {
@@ -170,41 +195,4 @@ class AttendanceProvider extends ChangeNotifier {
     sectionController.dispose();
     super.dispose();
   }
-}
-
-// AttendanceInfo model class
-class AttendanceInfo {
-  final String studentId;
-  final String studentName;
-  final String class1;
-  final String section;
-  final String attendanceDate;
-  final String attendanceStatus;
-
-  AttendanceInfo({
-    required this.studentId,
-    required this.studentName,
-    required this.class1,
-    required this.section,
-    required this.attendanceDate,
-    required this.attendanceStatus,
-  });
-
-  factory AttendanceInfo.fromJson(Map<String, dynamic> json) => AttendanceInfo(
-        studentId: json['studentId'] ?? '',
-        studentName: json['studentName'] ?? '',
-        class1: json['class1'] ?? '',
-        section: json['section'] ?? '',
-        attendanceDate: json['attendanceDate'] ?? '',
-        attendanceStatus: json['attendanceStatus'] ?? '',
-      );
-
-  Map<String, dynamic> toJson() => {
-        'studentId': studentId,
-        'studentName': studentName,
-        'class1': class1,
-        'section': section,
-        'attendanceDate': attendanceDate,
-        'attendanceStatus': attendanceStatus,
-      };
 }

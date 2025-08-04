@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'provider/attendance_provider.dart';
+import 'package:mobile/providers/attendance_provider.dart';
 import 'model_class/AttendanceInfo.dart';
 
 class Showstudentattendance extends StatefulWidget {
@@ -27,7 +27,7 @@ class _ShowstudentattendanceState extends State<Showstudentattendance> {
       ),
       body: Consumer<AttendanceProvider>(
         builder: (context, provider, _) {
-          if (provider.isLoading) {
+          if (provider.loading) {
             return const Center(child: CircularProgressIndicator());
           }
 
@@ -35,15 +35,15 @@ class _ShowstudentattendanceState extends State<Showstudentattendance> {
             return Center(child: Text(provider.error!));
           }
 
-          if (provider.attendances.isEmpty) {
+          if (provider.attendanceList.isEmpty) {
             return const Center(child: Text("No attendance data found."));
           }
 
           return ListView.builder(
             padding: const EdgeInsets.all(16.0),
-            itemCount: provider.attendances.length,
+            itemCount: provider.attendanceList.length,
             itemBuilder: (BuildContext context, index) {
-              final attendance = provider.attendances[index];
+              final attendance = provider.attendanceList[index];
 
               return Card(
                 margin: const EdgeInsets.symmetric(vertical: 8.0),
@@ -58,7 +58,7 @@ class _ShowstudentattendanceState extends State<Showstudentattendance> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       Text(
-                        'Attendance ID: ${attendance.attendanceId}',
+                        'Attendance ID: ${attendance.attendanceIdStr ?? 'N/A'}',
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                               fontWeight: FontWeight.bold,
                               color: Colors.teal,

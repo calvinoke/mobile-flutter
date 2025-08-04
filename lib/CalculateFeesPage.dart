@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/providers/fees_provider.dart';
+import 'package:mobile/providers/fees_provider.dart';
 
 
 class CalculateFeesPage extends StatelessWidget {

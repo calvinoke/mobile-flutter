@@ -5,6 +5,7 @@ class Alluser {
   final String image;
   final String role;
   final String password;
+  final String token; 
 
   Alluser({
     required this.username,
@@ -13,6 +14,7 @@ class Alluser {
     required this.image,
     required this.role,
     required this.password,
+    required this.token, 
   });
 
   factory Alluser.fromJson(Map<String, dynamic> json) => Alluser(
@@ -22,6 +24,7 @@ class Alluser {
         image: json['image'],
         role: json['role'],
         password: json['password'] ?? '',
+        token: json['token'] ?? '', 
       );
 
   Map<String, dynamic> toJson() => {
@@ -30,6 +33,7 @@ class Alluser {
         "email": email,
         "image": image,
         "role": role,
-        "password": password, 
+        "password": password,
+        "token": token, 
       };
 }

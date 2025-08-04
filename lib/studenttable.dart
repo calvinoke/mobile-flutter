@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:mobile/providers/student_provider.dart';
+import 'package:mobile/model_class/Studenttable.dart';
 
 class StudentTable extends StatefulWidget {
   const StudentTable({super.key});
@@ -36,22 +37,22 @@ class _StudentTableState extends State<StudentTable> {
         Provider.of<StudentProvider>(context, listen: false).fetchStudents());
   }
 
-  Map<String, dynamic> _buildStudentData() {
-    return {
-      'student_id': int.parse(_studentId.text),
-      'full_name': _fullName.text,
-      'dob': _dob.text,
-      'email': _email.text,
-      'mob': _mobile.text,
-      'gender': _selectedGender,
-      'class1': _class.text,
-      'subject': _subject.text,
-      'present_address': _presentAddress.text,
-      'permanent_address': _permanentAddress.text,
-      'session': _session.text,
-      'status': _status.text,
-      'section': _section.text,
-    };
+  Studenttable _buildStudentData() {
+    return Studenttable(
+      student_id: _studentId.text.isEmpty ? null : int.tryParse(_studentId.text),
+      full_name: _fullName.text,
+      dob: _dob.text,
+      email: _email.text,
+      mob: _mobile.text,
+      gender: _selectedGender,
+      class1: _class.text,
+      subject: _subject.text,
+      present_address: _presentAddress.text,
+      permanent_address: _permanentAddress.text,
+      session: _session.text,
+      status: _status.text,
+      section: _section.text,
+    );
   }
 
   void _resetForm() {
@@ -72,22 +73,22 @@ class _StudentTableState extends State<StudentTable> {
     _editingId = null;
   }
 
-  void _populateForm(Map<String, dynamic> student) {
+  void _populateForm(Studenttable student) {
     setState(() {
-      _editingId = student['id'];
-      _studentId.text = student['student_id'].toString();
-      _fullName.text = student['full_name'];
-      _dob.text = student['dob'];
-      _email.text = student['email'];
-      _mobile.text = student['mob'];
-      _selectedGender = student['gender'];
-      _class.text = student['class1'];
-      _subject.text = student['subject'];
-      _presentAddress.text = student['present_address'];
-      _permanentAddress.text = student['permanent_address'];
-      _session.text = student['session'];
-      _status.text = student['status'];
-      _section.text = student['section'];
+      _editingId = student.student_id;
+      _studentId.text = student.student_id?.toString() ?? '';
+      _fullName.text = student.full_name ?? '';
+      _dob.text = student.dob ?? '';
+      _email.text = student.email ?? '';
+      _mobile.text = student.mob ?? '';
+      _selectedGender = student.gender ?? 'Male';
+      _class.text = student.class1 ?? '';
+      _subject.text = student.subject ?? '';
+      _presentAddress.text = student.present_address ?? '';
+      _permanentAddress.text = student.permanent_address ?? '';
+      _session.text = student.session ?? '';
+      _status.text = student.status ?? '';
+      _section.text = student.section ?? '';
     });
   }
 
@@ -116,7 +117,9 @@ class _StudentTableState extends State<StudentTable> {
           key: _formKey,
           child: ListView(
             children: [
-              // Reuse your form fields here as before...
+              // TODO: Add your TextFormFields here for each controller, e.g.
+              // TextFormField(controller: _fullName, decoration: InputDecoration(labelText: 'Full Name'), validator: ...),
+
               ElevatedButton(
                 onPressed: () => _submitStudent(provider),
                 child: Text(_editingId == null ? 'Add Student' : 'Update Student'),
@@ -128,9 +131,9 @@ class _StudentTableState extends State<StudentTable> {
                   : Column(
                       children: provider.students
                           .map(
-                            (student) => ListTile(
-                              title: Text(student['full_name']),
-                              subtitle: Text("Class: ${student['class1']}"),
+                            (Studenttable student) => ListTile(
+                              title: Text(student.full_name ?? ''),
+                              subtitle: Text("Class: ${student.class1 ?? ''}"),
                               trailing: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
@@ -141,9 +144,11 @@ class _StudentTableState extends State<StudentTable> {
                                   IconButton(
                                     icon: const Icon(Icons.delete, color: Colors.red),
                                     onPressed: () async {
-                                      await provider.deleteStudent(student['id']);
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(content: Text("Student deleted")));
+                                      if (student.student_id != null) {
+                                        await provider.deleteStudent(student.student_id!);
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(content: Text("Student deleted")));
+                                      }
                                     },
                                   ),
                                 ],

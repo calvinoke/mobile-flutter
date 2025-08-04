@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:mobile/provider/admission_form_provider.dart';
+import 'package:mobile/providers/admission_form_provider.dart';
+import 'package:mobile/home.dart';
+import 'package:mobile/model_class/onlineadmission.dart';
 
 class AdmissionFormScreen extends StatelessWidget {
   const AdmissionFormScreen({super.key});
@@ -46,102 +48,86 @@ class AdmissionFormScreen extends StatelessWidget {
           child: Column(
             children: [
               buildTextField(
-                label: 'Registration No',
-                keyName: 'reg_no',
-                icon: Icons.assignment_ind,
-                formProvider: formProvider,
-              ),
+                  label: 'Registration No',
+                  keyName: 'reg_no',
+                  icon: Icons.assignment_ind,
+                  formProvider: formProvider),
               buildTextField(
-                label: 'Full Name',
-                keyName: 'full_name',
-                icon: Icons.person,
-                formProvider: formProvider,
-              ),
+                  label: 'Full Name',
+                  keyName: 'full_name',
+                  icon: Icons.person,
+                  formProvider: formProvider),
               buildTextField(
-                label: 'Date of Birth',
-                keyName: 'dob',
-                icon: Icons.cake,
-                formProvider: formProvider,
-              ),
+                  label: 'Date of Birth',
+                  keyName: 'dob',
+                  icon: Icons.cake,
+                  formProvider: formProvider),
               buildTextField(
-                label: 'Email',
-                keyName: 'email',
-                icon: Icons.email,
-                formProvider: formProvider,
-              ),
+                  label: 'Email',
+                  keyName: 'email',
+                  icon: Icons.email,
+                  formProvider: formProvider),
               buildTextField(
-                label: 'Mobile',
-                keyName: 'mob',
-                icon: Icons.phone,
-                formProvider: formProvider,
-              ),
+                  label: 'Mobile',
+                  keyName: 'mob',
+                  icon: Icons.phone,
+                  formProvider: formProvider),
               buildTextField(
-                label: 'Gender',
-                keyName: 'gender',
-                icon: Icons.wc,
-                formProvider: formProvider,
-              ),
+                  label: 'Gender',
+                  keyName: 'gender',
+                  icon: Icons.wc,
+                  formProvider: formProvider),
               buildTextField(
-                label: 'Father Name',
-                keyName: 'fathername',
-                icon: Icons.person,
-                formProvider: formProvider,
-              ),
+                  label: 'Father Name',
+                  keyName: 'fathername',
+                  icon: Icons.person,
+                  formProvider: formProvider),
               buildTextField(
-                label: 'Mother Name',
-                keyName: 'mothername',
-                icon: Icons.person,
-                formProvider: formProvider,
-              ),
+                  label: 'Mother Name',
+                  keyName: 'mothername',
+                  icon: Icons.person,
+                  formProvider: formProvider),
               buildTextField(
-                label: 'Class',
-                keyName: 'class1',
-                icon: Icons.class_,
-                formProvider: formProvider,
-              ),
+                  label: 'Class',
+                  keyName: 'class1',
+                  icon: Icons.class_,
+                  formProvider: formProvider),
               buildTextField(
-                label: 'Section',
-                keyName: 'section',
-                icon: Icons.account_tree,
-                formProvider: formProvider,
-              ),
+                  label: 'Section',
+                  keyName: 'section',
+                  icon: Icons.account_tree,
+                  formProvider: formProvider),
               buildTextField(
-                label: 'Present Address',
-                keyName: 'present_address',
-                icon: Icons.home,
-                formProvider: formProvider,
-              ),
+                  label: 'Present Address',
+                  keyName: 'present_address',
+                  icon: Icons.home,
+                  formProvider: formProvider),
               buildTextField(
-                label: 'Permanent Address',
-                keyName: 'permanent_address',
-                icon: Icons.home,
-                formProvider: formProvider,
-              ),
+                  label: 'Permanent Address',
+                  keyName: 'permanent_address',
+                  icon: Icons.home,
+                  formProvider: formProvider),
               buildTextField(
-                label: 'Username',
-                keyName: 'username',
-                icon: Icons.account_circle,
-                formProvider: formProvider,
-              ),
+                  label: 'Username',
+                  keyName: 'username',
+                  icon: Icons.account_circle,
+                  formProvider: formProvider),
               buildTextField(
-                label: 'Session',
-                keyName: 'session',
-                icon: Icons.date_range,
-                formProvider: formProvider,
-              ),
+                  label: 'Session',
+                  keyName: 'session',
+                  icon: Icons.date_range,
+                  formProvider: formProvider),
               buildTextField(
-                label: 'Password',
-                keyName: 'password',
-                icon: Icons.lock,
-                obscure: true,
-                formProvider: formProvider,
-              ),
+                  label: 'Password',
+                  keyName: 'password',
+                  icon: Icons.lock,
+                  obscure: true,
+                  formProvider: formProvider),
               buildTextField(
-                label: 'Image URL',
-                keyName: 'image',
-                icon: Icons.image,
-                formProvider: formProvider,
-              ),
+                  label: 'Image URL',
+                  keyName: 'image',
+                  icon: Icons.image,
+                  formProvider: formProvider),
               const SizedBox(height: 20),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
@@ -151,27 +137,40 @@ class AdmissionFormScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                onPressed: () async {
-                  if (formProvider.formKey.currentState!.validate()) {
-                    final result = await formProvider.submitForm();
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(result != null
-                              ? 'Submitted successfully'
-                              : 'Submission failed'),
+                onPressed: formProvider.isLoading
+                    ? null
+                    : () async {
+                        if (formProvider.formKey.currentState!.validate()) {
+                          final result = await formProvider.submitForm();
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(result != null
+                                    ? 'Submitted successfully'
+                                    : 'Submission failed'),
+                              ),
+                            );
+                            if (result != null) {
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const MyHomePage(title: 'Home'),
+                                ),
+                              );
+                            }
+                          }
+                        }
+                      },
+                child: formProvider.isLoading
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
                         ),
-                      );
-                      if (result != null) {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(builder: (_) => const MyApp()),
-                        );
-                      }
-                    }
-                  }
-                },
-                child: const Text('Submit', style: TextStyle(fontSize: 18)),
+                      )
+                    : const Text('Submit', style: TextStyle(fontSize: 18)),
               ),
             ],
           ),

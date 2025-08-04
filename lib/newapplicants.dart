@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:mobile/providers/new_applicants_provider.dart';
 import 'package:mobile/model_class/Onlineadmission.dart';
+import 'package:intl/intl.dart';
 
 class NewApplicants extends StatefulWidget {
   const NewApplicants({super.key});
@@ -59,17 +60,17 @@ class _NewApplicantsState extends State<NewApplicants> {
               backgroundImage: NetworkImage(student.image ?? ''),
             ),
             const SizedBox(height: 12),
-            _buildInfoRow('Registration ID', student.reg_no),
-            _buildInfoRow('Full Name', student.full_name),
-            _buildInfoRow('Date of Birth', student.dob),
+            _buildInfoRow('Registration ID', student.regNo?.toString()),
+            _buildInfoRow('Full Name', student.fullName),
+            _buildInfoRow('Date of Birth', DateFormat('yyyy-MM-dd').format(student.dob)),
             _buildInfoRow('Email', student.email),
-            _buildInfoRow('Mobile', student.mob),
+            _buildInfoRow('Mobile', student.mobile),
             _buildInfoRow('Gender', student.gender),
-            _buildInfoRow('Class', student.class1),
+            _buildInfoRow('Class', student.className),
             _buildInfoRow('Section', student.section),
             _buildInfoRow('Session', student.session),
-            _buildInfoRow('Present Address', student.present_address),
-            _buildInfoRow('Permanent Address', student.permanent_address),
+            _buildInfoRow('Present Address', student.presentAddress),
+            _buildInfoRow('Permanent Address', student.permanentAddress),
             _buildInfoRow('Username', student.username),
             _buildInfoRow('Password', student.password),
           ],

@@ -1,10 +1,124 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:mobile/providers/marks_provider.dart';
 import 'package:mobile/teacherpanel.dart';
+import 'package:mobile/providers/user_provider.dart';
+import 'package:mobile/model_class/onlineadmission.dart';
+import 'package:mobile/model_class/marks.dart';
+import 'package:mobile/providers/marks_provider.dart';
 
-class CalculateMarksPage extends StatelessWidget {
+class CalculateMarksPage extends StatefulWidget {
   const CalculateMarksPage({super.key});
+
+  @override
+  State<CalculateMarksPage> createState() => _CalculateMarksPageState();
+}
+
+class _CalculateMarksPageState extends State<CalculateMarksPage> {
+  final TextEditingController _subjectController = TextEditingController();
+  final TextEditingController _totalMarksController = TextEditingController();
+  final TextEditingController _scoredMarksController = TextEditingController();
+
+  @override
+  void dispose() {
+    _subjectController.dispose();
+    _totalMarksController.dispose();
+    _scoredMarksController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<UserProvider>(
+      builder: (context, userProvider, _) {
+        final Onlineadmission? student = userProvider.student;
+
+        if (student == null) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('Calculate Marks'),
+          ),
+          body: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                Text('Student: ${student.fullName}'),
+                const SizedBox(height: 16),
+                _buildTextField(
+                  label: 'Subject',
+                  controller: _subjectController,
+                ),
+                _buildTextField(
+                  label: 'Total Marks',
+                  controller: _totalMarksController,
+                  type: TextInputType.number,
+                ),
+                _buildTextField(
+                  label: 'Scored Marks',
+                  controller: _scoredMarksController,
+                  type: TextInputType.number,
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () {
+                    final String subject = _subjectController.text.trim();
+                    final int? totalMarks = int.tryParse(_totalMarksController.text);
+                    final int? scoredMarks = int.tryParse(_scoredMarksController.text);
+
+                    if (subject.isEmpty || totalMarks == null || scoredMarks == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Please fill all fields correctly')),
+                      );
+                      return;
+                    }
+
+                    final marksProvider = Provider.of<MarksProvider>(context, listen: false);
+
+                    marksProvider.studentId.text = student.regNo.toString();
+                    marksProvider.studentName.text = student.fullName;
+                    marksProvider.studentClass.text = student.className ?? '';
+
+                    marksProvider.subjectControllers[subject] ??= TextEditingController();
+                    marksProvider.subjectControllers[subject]!.text = scoredMarks.toString();
+
+                    marksProvider.calculateResult();
+
+                    final marks = Marks(
+                      examTitle: marksProvider.examTitle.text.isEmpty
+                          ? 'Exam'
+                          : marksProvider.examTitle.text,
+                      studentId: student.regNo!,
+                      studentName: student.fullName,
+                      studentClass: student.className ?? '',
+                      subjectMarks: marksProvider.subjectControllers.map(
+                        (key, controller) => MapEntry(
+                          key,
+                          double.tryParse(controller.text) ?? 0.0,
+                        ),
+                      ),
+                    );
+
+                    marksProvider.addMarks(marks);
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Marks added successfully')),
+                    );
+
+                    _subjectController.clear();
+                    _totalMarksController.clear();
+                    _scoredMarksController.clear();
+                  },
+                  child: const Text('Add Marks'),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 
   Widget _buildTextField({
     required String label,
@@ -12,119 +126,13 @@ class CalculateMarksPage extends StatelessWidget {
     TextInputType? type,
   }) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: TextField(
         controller: controller,
-        keyboardType: type ?? TextInputType.text,
+        keyboardType: type,
         decoration: InputDecoration(
           labelText: label,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-        ),
-      ),
-    );
-  }
-
-  TableRow _buildTableRow(String label, String value) {
-    return TableRow(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(8),
-          child: Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-        ),
-        Padding(
-          padding: const EdgeInsets.all(8),
-          child: Text(value, style: const TextStyle(fontSize: 16)),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildResultTable(BuildContext context) {
-    final provider = Provider.of<MarksProvider>(context);
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Table(
-          columnWidths: const {
-            0: FlexColumnWidth(2),
-            1: FlexColumnWidth(3),
-          },
-          children: [
-            _buildTableRow('Total Marks', provider.totalMarks.toStringAsFixed(2)),
-            _buildTableRow('Obtain Grade', provider.averageGrade.toStringAsFixed(2)),
-            _buildTableRow('Result', provider.result),
-          ],
-        ),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final provider = Provider.of<MarksProvider>(context);
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Calculate Marks & Grade'),
-        backgroundColor: Colors.teal,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            _buildTextField(label: 'Exam Title', controller: provider.examTitle),
-            _buildTextField(label: 'Student ID', controller: provider.studentId, type: TextInputType.number),
-            _buildTextField(label: 'Student Name', controller: provider.studentName),
-            _buildTextField(label: 'Class', controller: provider.studentClass),
-
-            ...provider.subjects.map((subject) => _buildTextField(
-                  label: '$subject Marks',
-                  controller: provider.subjectControllers[subject]!,
-                  type: TextInputType.number,
-                )),
-
-            const SizedBox(height: 20),
-
-            ElevatedButton(
-              onPressed: provider.calculateResult,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.teal,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                textStyle: const TextStyle(fontSize: 18),
-              ),
-              child: const Text('Calculate'),
-            ),
-
-            const SizedBox(height: 20),
-            _buildResultTable(context),
-            const SizedBox(height: 20),
-
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const Teacherpanel(
-                      userName: 'demo_user', // Replace with real values
-                      userEmail: 'demo@example.com',
-                    ),
-                  ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                textStyle: const TextStyle(fontSize: 18),
-              ),
-              child: const Text('Save Result'),
-            ),
-          ],
+          border: const OutlineInputBorder(),
         ),
       ),
     );

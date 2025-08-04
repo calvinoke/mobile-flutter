@@ -20,13 +20,32 @@ class ExamFormProvider with ChangeNotifier {
 
   List<String> subjectList = [];
 
-  List<String> get invigilators => ['Calvin Oker', 'Owiny Paul', 'Okello Peter'];
+  // Added: Invigilators list
+  List<String> _invigilators = [];
+
+  List<String> get invigilators => _invigilators;
 
   void updateSubjectList() {
     subjectList = (selectedClass == '9th' || selectedClass == '10th')
         ? ['Math', 'Physics', 'Chemistry', 'Accounting', 'Finance']
         : ['History', 'English', 'Math', 'Science'];
     notifyListeners();
+  }
+
+  Future<void> loadInvigilators() async {
+    try {
+      final response = await http.get(Uri.parse('${dotenv.env['API_URL']}/invigilators'));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        _invigilators = List<String>.from(data.map((item) => item.toString()));
+        notifyListeners();
+      } else {
+        debugPrint('Failed to load invigilators. Status: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('Error loading invigilators: $e');
+    }
   }
 
   Future<void> pickDate(BuildContext context) async {

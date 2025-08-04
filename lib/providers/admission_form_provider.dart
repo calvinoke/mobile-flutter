@@ -24,7 +24,13 @@ class AdmissionFormProvider extends ChangeNotifier {
     'image': TextEditingController(),
   };
 
+  bool _isLoading = false;
+  bool get isLoading => _isLoading;
+
   Future<Onlineadmission?> submitForm() async {
+    _isLoading = true;
+    notifyListeners();
+
     final student = Onlineadmission(
       regNo: int.tryParse(controllers['reg_no']!.text),
       fullName: controllers['full_name']!.text,
@@ -46,7 +52,13 @@ class AdmissionFormProvider extends ChangeNotifier {
           : null,
     );
 
-    return await AdmissionService.submitForm(student);
+    try {
+      final result = await AdmissionService.submitForm(student);
+      return result;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
   void disposeControllers() {

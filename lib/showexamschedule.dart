@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import 'package:mobile/providers/exam_schedule_provider.dart'; // adjust import path
+import 'package:mobile/providers/exam_schedule_provider.dart';
 
 class ShowExamSchedule extends StatelessWidget {
   const ShowExamSchedule({super.key});

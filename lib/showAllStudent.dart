@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:mobile/model_class/Studenttable.dart';
 import 'add_student_screen.dart';
-import 'student_provider.dart';
+import 'package:mobile/providers/student_provider.dart';
 
 class ShowAllStudentsScreen extends StatelessWidget {
   const ShowAllStudentsScreen({super.key});
@@ -46,14 +46,32 @@ class ShowAllStudentsScreen extends StatelessWidget {
                 IconButton(
                   icon: const Icon(Icons.delete, color: Colors.red),
                   onPressed: () async {
-                    final success = await provider.deleteStudent(student.id.toString());
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(success
-                            ? "Student deleted successfully"
-                            : "Failed to delete student"),
-                      ),
-                    );
+                    final idStr = student.id;
+                    if (idStr == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Invalid student ID')),
+                      );
+                      return;
+                    }
+
+                    final id = int.tryParse(idStr);
+                    if (id == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Invalid student ID format')),
+                      );
+                      return;
+                    }
+
+                    try {
+                      await provider.deleteStudent(id);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Student deleted successfully")),
+                      );
+                    } catch (e) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text("Failed to delete student: $e")),
+                      );
+                    }
                   },
                 ),
               ],

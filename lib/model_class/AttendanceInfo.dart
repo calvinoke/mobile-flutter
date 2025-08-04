@@ -1,28 +1,14 @@
-/// This class models the attendance information for a student.
-class Attendanceinfo {
-  /// Unique ID for the attendance record (nullable)
-  int? attendanceId;
+// lib/model_class/attendance_info.dart
+class AttendanceInfo {
+  final int? attendanceId;
+  final int? studentId;
+  final String? studentName;
+  final String? class1;
+  final String? section;
+  final String? attendanceDate;
+  final String? attendanceStatus;
 
-  /// Unique ID of the student (nullable)
-  int? studentId;
-
-  /// Full name of the student (nullable)
-  String? studentName;
-
-  /// Class name or grade the student belongs to (nullable)
-  String? class1;
-
-  /// Section of the class (nullable)
-  String? section;
-
-  /// Date of the attendance in string format (e.g., "2024-06-30") (nullable)
-  String? attendanceDate;
-
-  /// Attendance status (e.g., "Present", "Absent") (nullable)
-  String? attendanceStatus;
-
-  /// Constructor for creating an Attendanceinfo object with required fields
-  Attendanceinfo({
+  AttendanceInfo({
     required this.attendanceId,
     required this.studentId,
     required this.studentName,
@@ -32,8 +18,9 @@ class Attendanceinfo {
     required this.attendanceStatus,
   });
 
-  /// Factory method to create an Attendanceinfo instance from a JSON map
-  factory Attendanceinfo.fromJson(Map<String, dynamic> json) => Attendanceinfo(
+  String? get attendanceIdStr => attendanceId?.toString();
+
+  factory AttendanceInfo.fromJson(Map<String, dynamic> json) => AttendanceInfo(
         attendanceId: json['attendanceId'],
         studentId: json['studentId'],
         studentName: json['studentName'],
@@ -43,16 +30,13 @@ class Attendanceinfo {
         attendanceStatus: json['attendanceStatus'],
       );
 
-  /// Converts an Attendanceinfo object to a JSON map
-  Map<String, dynamic> toJson() {
-    return {
-      "attendanceId": attendanceId,
-      "studentId": studentId,
-      "studentName": studentName,
-      "class1": class1,
-      "section": section,
-      "attendanceDate": attendanceDate,
-      "attendanceStatus": attendanceStatus,
-    };
-  }
+  Map<String, dynamic> toJson() => {
+        'attendanceId': attendanceId,
+        'studentId': studentId,
+        'studentName': studentName,
+        'class1': class1,
+        'section': section,
+        'attendanceDate': attendanceDate,
+        'attendanceStatus': attendanceStatus,
+      };
 }

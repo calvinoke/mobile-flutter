@@ -4,7 +4,7 @@ import 'dart:convert';
 class Onlineadmission {
   final int? regNo;
   final String fullName;
-  final DateTime dob; // Changed from String to DateTime for safety and consistency
+  final DateTime dob;
   final String email;
   final String mobile;
   final String gender;

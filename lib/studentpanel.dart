@@ -1,7 +1,5 @@
-// lib/pages/student_panel.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:mobile/PaymentRecordsPage.dart';
 import 'package:mobile/ShowClassRoutine.dart';
 import 'package:mobile/main.dart';
 import 'package:mobile/StudentResultPage.dart';
@@ -9,18 +7,23 @@ import 'package:mobile/showAttendanceById.dart';
 import 'package:mobile/showexamschedule.dart';
 import 'package:mobile/CalculateMarksPage.dart';
 import 'package:provider/provider.dart';
-import '../providers/student_profile_provider.dart';
+import 'package:mobile/providers/student_profile_provider.dart';
 
 class Studentpanel extends StatelessWidget {
   const Studentpanel({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final profile = Provider.of<StudentProfileProvider>(context);
     final apiUrl = dotenv.env['API_BASE_URL'] ?? 'Not Found';
 
+    // Get student profile from provider
+    final profile = Provider.of<StudentProfileProvider>(context);
+    final name = profile.name;
+    final email = profile.email;
+    final imageUrl = profile.imageUrl ?? '';
+
     return Scaffold(
-      drawer: _buildDrawer(context, profile),
+      drawer: _buildDrawer(context, name, email, imageUrl),
       appBar: AppBar(
         title: const Text("Student Panel", style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.pink,
@@ -40,11 +43,11 @@ class Studentpanel extends StatelessWidget {
               mainAxisSpacing: 8,
               crossAxisSpacing: 8,
               children: [
-                _buildCard(context, Colors.pink, Icons.person, "Class Routine", const ShowClassRoutine()),
+                _buildCard(context, Colors.pink, Icons.person, "Class Routine", ShowClassRoutine()),
                 _buildCard(context, Colors.teal, Icons.school, "Exam Schedule", const ShowExamSchedule()),
                 _buildCard(context, Colors.deepOrange, Icons.group, "Attendance", const SearchId()),
                 _buildCard(context, Colors.deepPurple, Icons.attach_money, "Mark Submission", const CalculateMarksPage()),
-                _buildCard(context, Colors.brown, Icons.report, "Report Card", const StudentResultPage()),
+                _buildCard(context, Colors.brown, Icons.report, "Report Card", StudentResultPage()),
                 _buildCard(
                   context,
                   Colors.lightBlueAccent,
@@ -68,19 +71,19 @@ class Studentpanel extends StatelessWidget {
     );
   }
 
-  Widget _buildDrawer(BuildContext context, StudentProfileProvider profile) {
+  Widget _buildDrawer(BuildContext context, String name, String email, String imageUrl) {
     return Drawer(
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
           UserAccountsDrawerHeader(
-            accountName: Text(profile.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            accountEmail: Text(profile.email),
+            accountName: Text(name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            accountEmail: Text(email),
             currentAccountPicture: CircleAvatar(
               backgroundColor: Colors.white,
               child: ClipOval(
-                child: profile.imageUrl != null && profile.imageUrl!.isNotEmpty
-                    ? Image.network(profile.imageUrl!, fit: BoxFit.cover)
+                child: imageUrl.isNotEmpty
+                    ? Image.network(imageUrl, fit: BoxFit.cover)
                     : const Image(image: AssetImage("images/PA.png")),
               ),
             ),

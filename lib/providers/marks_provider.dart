@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+// Assuming you have a Marks model somewhere
+import 'package:mobile/model_class/marks.dart';
+
 class MarksProvider with ChangeNotifier {
   final examTitle = TextEditingController();
   final studentId = TextEditingController();
@@ -13,15 +16,23 @@ class MarksProvider with ChangeNotifier {
   double averageGrade = 0.0;
   String result = '';
 
+  // List to store all marks entries
+  List<Marks> _marksList = [];
+
   MarksProvider() {
+    // Update subjects list and controllers when studentClass changes
     studentClass.addListener(updateSubjects);
   }
 
   void updateSubjects() {
     final className = studentClass.text.trim();
+
+    // Clear existing subjects and dispose old controllers
     subjects.clear();
+    subjectControllers.forEach((_, controller) => controller.dispose());
     subjectControllers.clear();
 
+    // Define subjects based on class
     if (['1st', '2nd', '3rd', '4th', '5th'].contains(className)) {
       subjects.addAll(['SST', 'English', 'Mathematics', 'Science']);
     } else if (['6th', '7th', '8th'].contains(className)) {
@@ -32,6 +43,7 @@ class MarksProvider with ChangeNotifier {
       subjects.addAll(['SST', 'English', 'Math', 'Finance', 'Accounting']);
     }
 
+    // Create new controllers for each subject
     for (var subject in subjects) {
       subjectControllers[subject] = TextEditingController();
     }
@@ -53,6 +65,7 @@ class MarksProvider with ChangeNotifier {
     double total = 0.0;
     final grades = <double>[];
 
+    // Sum marks and calculate grades for each subject
     for (var controller in subjectControllers.values) {
       final marks = double.tryParse(controller.text.trim()) ?? 0.0;
       total += marks;
@@ -66,6 +79,16 @@ class MarksProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  // Add a Marks object to the list and notify listeners
+  void addMarks(Marks marks) {
+    _marksList.add(marks);
+    notifyListeners();
+  }
+
+  // Getter for marks list
+  List<Marks> get marksList => _marksList;
+
+  // Dispose all text controllers to free resources
   void disposeControllers() {
     examTitle.dispose();
     studentId.dispose();

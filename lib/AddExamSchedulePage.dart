@@ -2,10 +2,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:provider/provider.dart';  // <-- Import Provider package
+import 'package:provider/provider.dart';
 import 'package:mobile/providers/exam_form_provider.dart';
-// Make sure you have this provider class imported correctly
-// import 'path_to_your_provider/exam_form_provider.dart';
 
 final String apiUrl = dotenv.env['API_URL']!;
 
@@ -15,16 +13,12 @@ class AddExamSchedulePage extends StatefulWidget {
 }
 
 class _AddExamSchedulePageState extends State<AddExamSchedulePage> {
-  // Key removed here since it will be used in the provider
-
-  // No more local state variables; use the provider's
-
-  // Updates the list of subjects based on the selected class
+  // Helper to update subject list based on selected class
   void _updateSubjectList(ExamFormProvider formProvider) {
     formProvider.updateSubjectList();
   }
 
-  // Opens a date picker dialog and updates the examDate variable
+  // Date picker handler
   Future<void> _pickDate(ExamFormProvider formProvider) async {
     final picked = await showDatePicker(
       context: context,
@@ -38,7 +32,7 @@ class _AddExamSchedulePageState extends State<AddExamSchedulePage> {
     }
   }
 
-  // Opens a time picker dialog and updates start or end time based on flag
+  // Time picker handler
   Future<void> _pickTime(ExamFormProvider formProvider, {required bool isStartTime}) async {
     final picked = await showTimePicker(
       context: context,
@@ -54,11 +48,13 @@ class _AddExamSchedulePageState extends State<AddExamSchedulePage> {
     }
   }
 
-  // Handles submission of the form data to the backend API
+  // Submit exam schedule
   Future<void> _submitSchedule(ExamFormProvider formProvider) async {
     if (!formProvider.formKey.currentState!.validate()) return;
 
-    if (formProvider.examDate == null || formProvider.examStartTime == null || formProvider.examEndTime == null) {
+    if (formProvider.examDate == null ||
+        formProvider.examStartTime == null ||
+        formProvider.examEndTime == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Please select exam date and time')),
       );
@@ -189,7 +185,7 @@ class _AddExamSchedulePageState extends State<AddExamSchedulePage> {
 
   @override
   Widget build(BuildContext context) {
-    final formProvider = Provider.of<ExamFormProvider>(context);  // <-- Added here!
+    final formProvider = Provider.of<ExamFormProvider>(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -258,7 +254,7 @@ class _AddExamSchedulePageState extends State<AddExamSchedulePage> {
                   _buildDropdown(
                     label: 'Invigilator',
                     value: formProvider.selectedInvigilator,
-                    items: formProvider.allTeacherNameList,
+                    items: formProvider.invigilators,
                     onChanged: (val) => formProvider.selectedInvigilator = val!,
                   ),
                   SizedBox(height: 20),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:mobile/providers/attendance_provider.dart'; // Adjust import path
+import 'package:mobile/providers/attendance_provider.dart';
 
 class SearchId extends StatefulWidget {
   const SearchId({super.key});

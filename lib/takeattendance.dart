@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'attendance_provider.dart';
+import 'package:mobile/providers/attendance_provider.dart';
 
 class TakeAttendance extends StatelessWidget {
   final _formKey = GlobalKey<FormState>();

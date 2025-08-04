@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:mobile/model_class/Alluser.dart';
 import 'package:mobile/providers/user_provider.dart';
-import 'package:mobile/main.dart';
+import 'login.dart';
 
 class Signup extends StatefulWidget {
   const Signup({super.key});
@@ -32,6 +32,7 @@ class _SignupState extends State<Signup> {
         password: _password.text,
         image: _image.text,
         role: _role.text,
+        token: '',
       );
 
       final user = await userProvider.signup(newUser);
@@ -41,7 +42,7 @@ class _SignupState extends State<Signup> {
         );
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const MyHomePage(title: 'Login')),
+          MaterialPageRoute(builder: (_) => const LoginScreen()), // Navigate to LoginScreen here
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -104,6 +105,7 @@ class _SignupState extends State<Signup> {
                 icon: Icons.post_add,
                 validator: (value) => value!.isEmpty ? 'Role is required' : null,
               ),
+              const SizedBox(height: 10),
               ElevatedButton(
                 onPressed: _handleSignup,
                 child: const Text('Sign Up'),
@@ -123,7 +125,7 @@ class _SignupState extends State<Signup> {
     String? Function(String?)? validator,
   }) {
     return Padding(
-      padding: const EdgeInsets.all(5),
+      padding: const EdgeInsets.symmetric(vertical: 5),
       child: TextFormField(
         controller: controller,
         obscureText: obscure,

@@ -1,7 +1,9 @@
-// This class represents a student record, typically stored in a student table in a database.
 class Studenttable {
   // Unique identifier for the student
   int? student_id;
+
+  // Getter for id as string
+  String? get id => student_id?.toString();
 
   // Full name of the student
   String? full_name;
@@ -66,7 +68,7 @@ class Studenttable {
         gender: json['gender'],
         class1: json['class1'],
         subject: json['subject'],
-        present_address: json['present_address'],  // JSON key uses 'present_address'
+        present_address: json['present_address'],  
         permanent_address: json['permanent_address'],
         session: json['session'],
         status: json['status'],
@@ -84,7 +86,7 @@ class Studenttable {
       "gender": gender,
       "class1": class1,
       "subject": subject,
-      "present_address": present_address,  // Output as 'present_address' for consistency
+      "present_address": present_address,  
       "permanent_address": permanent_address,
       "session": session,
       "status": status,

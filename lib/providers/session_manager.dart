@@ -40,8 +40,13 @@ class SessionManager extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> logout() async {
+    await clear();
+  }
+
   Future<bool> isLoggedIn() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.containsKey('auth_token');
   }
 }
+

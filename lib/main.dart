@@ -1,13 +1,30 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import 'model_class/Alluser.dart';
 import 'providers/user_provider.dart';
-import 'Login.dart'; // or your main screen
+import 'providers/session_manager.dart';
+
+// Screens
+import 'login.dart';
+import 'signup.dart'; // Import your Signup screen here
+import 'dashboard.dart'; // Your Dashboard screen
+
+// Other providers
+import 'providers/attendance_provider.dart';
+import 'providers/student_provider.dart';
+import 'providers/result_provider.dart';
+import 'providers/student_profile_provider.dart';
+import 'providers/exam_form_provider.dart';
+import 'providers/exam_schedule_provider.dart';
+import 'providers/class_routine_provider.dart';
+import 'providers/fees_provider.dart';
+import 'providers/new_applicants_provider.dart';
+import 'providers/marks_provider.dart';
+import 'providers/admission_form_provider.dart';
+import 'providers/admin_pannel_provider.dart';
 
 List<Alluser> objectsFromJson(String str) =>
     List<Alluser>.from(json.decode(str).map((x) => Alluser.fromJson(x)));
@@ -22,6 +39,7 @@ Future<void> main() async {
   runApp(
     MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => SessionManager()),
         ChangeNotifierProvider(create: (_) => UserProvider()),
         ChangeNotifierProvider(create: (_) => AttendanceProvider()),
         ChangeNotifierProvider(create: (_) => StudentProvider()),
@@ -30,19 +48,11 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => ExamFormProvider()),
         ChangeNotifierProvider(create: (_) => ExamScheduleProvider()),
         ChangeNotifierProvider(create: (_) => ClassRoutineProvider()),
-        ChangeNotifierProvider(create: (_) => SessionManager()),
         ChangeNotifierProvider(create: (_) => FeesProvider()),
-         child: CalculateFeesPage(),
         ChangeNotifierProvider(create: (_) => NewApplicantsProvider()),
         ChangeNotifierProvider(create: (_) => MarksProvider()),
         ChangeNotifierProvider(create: (_) => AdmissionFormProvider()),
         ChangeNotifierProvider(create: (_) => AdminPanelProvider()),
-
-        
-
-
-
-
       ],
       child: const MyApp(),
     ),
@@ -61,16 +71,6 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
         useMaterial3: true,
       ),
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: const [
-        Locale('en'),
-        Locale('bn'),
-      ],
       home: const MyHomePage(title: 'School Management System'),
     );
   }
@@ -82,9 +82,44 @@ class MyHomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(title)),
-      body: Center(child: Text('Welcome')),
-    );
+    final session = context.watch<SessionManager>();
+
+    if (session.loggedIn) {
+      return Scaffold(
+        appBar: AppBar(title: Text(title)),
+        body: const DashboardScreen(),
+      );
+    } else {
+      // Show buttons to navigate to Login or Signup
+      return Scaffold(
+        appBar: AppBar(title: Text(title)),
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const LoginScreen()),
+                  );
+                },
+                child: const Text('Login'),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const Signup()),
+                  );
+                },
+                child: const Text('Signup'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
   }
 }

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:mobile/providers/admin_pannel_provider.dart';
+import 'package:mobile/providers/user_provider.dart';
 import 'package:mobile/main.dart';
-import 'package:mobile/providers/admin_panel_provider.dart';
 
 class Adminpanel extends StatefulWidget {
   const Adminpanel({super.key});
@@ -17,8 +18,12 @@ class _AdminpanelState extends State<Adminpanel> {
   Widget build(BuildContext context) {
     final panelItems = Provider.of<AdminPanelProvider>(context).items;
 
+    // Get user info from provider (adjust based on your actual user provider)
+    final userProvider = Provider.of<UserProvider>(context);
+    final user = userProvider.user; // Assuming user object has name, email, image
+
     return Scaffold(
-      drawer: _buildDrawer(),
+      drawer: _buildDrawer(user),
       appBar: AppBar(
         title: const Text("Welcome to Admin Panel"),
         backgroundColor: Colors.pink,
@@ -116,7 +121,7 @@ class _AdminpanelState extends State<Adminpanel> {
         child: const Icon(Icons.arrow_back),
         tooltip: 'Go to the previous page',
         onPressed: () {
-          Navigator.push(
+          Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (_) => const MyApp()),
           );
@@ -125,20 +130,19 @@ class _AdminpanelState extends State<Adminpanel> {
     );
   }
 
-  Drawer _buildDrawer() {
+  Drawer _buildDrawer(user) {
+    final menuItems = Provider.of<AdminPanelProvider>(context).items;  // <-- fixed here
+
     return Drawer(
       child: ListView(
         children: [
           UserAccountsDrawerHeader(
-            accountName: const Text('Azizur Rahman'),
-            accountEmail: const Text('Aziz@gmail.com'),
-            currentAccountPicture: const CircleAvatar(
-              child: ClipOval(
-                child: Image(
-                  image: AssetImage("images/download.png"),
-                  fit: BoxFit.cover,
-                ),
-              ),
+            accountName: Text(user?.name ?? 'Unknown User'),
+            accountEmail: Text(user?.email ?? ''),
+            currentAccountPicture: CircleAvatar(
+              backgroundImage: user?.image != null && user!.image.isNotEmpty
+                  ? NetworkImage(user.image)
+                  : const AssetImage("images/download.png") as ImageProvider,
             ),
             decoration: const BoxDecoration(
               color: Colors.pinkAccent,
@@ -148,20 +152,14 @@ class _AdminpanelState extends State<Adminpanel> {
               ),
             ),
           ),
-          ...[
-            {'icon': Icons.person, 'title': 'Admin'},
-            {'icon': Icons.home, 'title': 'Home'},
-            {'icon': Icons.call, 'title': 'Contact'},
-            {'icon': Icons.email, 'title': 'Email Address'},
-            {'icon': Icons.settings, 'title': 'Settings'},
-          ].map(
+          ...menuItems.map(
             (item) => ListTile(
-              leading: Icon(item['icon'] as IconData),
-              title: Text(item['title'] as String),
+              leading: Icon(item.icon),
+              title: Text(item.title),
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const MyApp()),
+                  MaterialPageRoute(builder: (_) => item.page),
                 );
               },
             ),
